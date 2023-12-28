@@ -1,0 +1,43 @@
+version: "3"
+
+dotenv: [".env"]
+
+tasks:
+  add:
+    silent: true
+    #prompt: This will create Day {{.CLI_ARGS}}. Continue?
+    cmds:
+      - echo "Adding Day {{.CLI_ARGS}}"
+      - mkdir day{{.CLI_ARGS}}
+      - cp tmp/solve.ts day{{.CLI_ARGS}}/solve.ts
+      # - cp tmp/data.ts day{{.CLI_ARGS}}/data.ts
+      - | # Workaround since taskfile can't parse : properly
+        jq '.tasks += { "day{{.CLI_ARGS}}" : "deno run --allow-read --watch day{{.CLI_ARGS}}/solve.ts" }' deno.json > deno.bak.json
+      - mv deno.bak.json deno.json
+      - sed 's/{DAY}/{{.CLI_ARGS}}/g' day{{.CLI_ARGS}}/solve.ts > day{{.CLI_ARGS}}/solve.bak.ts
+      - mv day{{.CLI_ARGS}}/solve.bak.ts day{{.CLI_ARGS}}/solve.ts
+      - sed 's/\/\/ TEMPLATE//g' day{{.CLI_ARGS}}/solve.ts > day{{.CLI_ARGS}}/solve.bak.ts
+      - mv day{{.CLI_ARGS}}/solve.bak.ts day{{.CLI_ARGS}}/solve.ts
+  fetch:
+    silent: true
+    cmds:
+      - |
+        curl "https://adventofcode.com/$YEAR/day/{{.CLI_ARGS}}/input" -H "cookie: session=$SESSION;" > day{{.CLI_ARGS}}/task.txt
+      - touch day{{.CLI_ARGS}}/sample.txt
+      - task: title
+  
+  title:
+    silent: true
+    cmds:
+      - |
+        export TITLE=$(curl -s https://adventofcode.com/$YEAR/day/{{.CLI_ARGS}} | grep -Eow "Day \d+: .+ ---" | sed -e "s/Day [0-9]*: \(.*\) ---/\1/g")
+        sed -i '' "s/YYY/$TITLE/g" day{{.CLI_ARGS}}/solve.ts
+        
+  aoc:
+    cmds:
+      - task: add
+      - task: fetch
+
+  repl: 
+    cmd: deno repl --eval 'import _ from "npm:lodash"'
+ 
