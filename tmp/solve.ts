@@ -6,7 +6,7 @@ type Puzzle = string[][]
 
 const [task, sample] = read("day{DAY}")
   .map((file) => file.split("\n").slice(0, -1))
-  .map((file) => file)
+  .map((file) => file.map((l) => l))
 
 console.clear()
 console.log("🎄 Day {DAY}: YYY")
