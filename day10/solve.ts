@@ -58,15 +58,13 @@ const solve2 = (data: Puzzle) => {
     }
   }
 
-  // const cache = new Map()
-  // function waysTo(target: number) {
-  //   if(cache.has(target)) return cache.get(target) 
-  // 
-  //   const startPoints = sorted.filter((s) => s >= target + 1 && s <= target + 3)
-  //
-  // }
+  const pathsToEnd: (cur: number) => number = _.memoize((cur: number) => {
+    const nextPoints = sorted.filter((s) => s >= cur + 1 && s <= cur + 3)
+    if (nextPoints.length == 0) return 1
+    return _.sum(nextPoints.map((np) => pathsToEnd(np)))
+  })
 
-  return seen.size
+  return pathsToEnd(_.first(sorted)!)
 }
 
 const solve2Sample = runPart2 ? solve2(sample) : "skipped"
