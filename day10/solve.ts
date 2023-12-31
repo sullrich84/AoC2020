@@ -40,12 +40,11 @@ const solve2 = (data: Puzzle) => {
 
   while (stack.length > 0) {
     const [cur, nums] = stack.pop()!
-    seen.add(nums.join())
+    const key = nums.join()
+    seen.add(key)
 
     const idx = _.indexOf(nums, cur)
     const next = nums.filter((r) => r >= cur + 1 && r <= cur + 3)
-
-    // console.log(cur, nums.join())
 
     if (next.length == 1) {
       stack.push([nums[idx + 1], nums])
@@ -57,8 +56,15 @@ const solve2 = (data: Puzzle) => {
       stack.push([next[1], [...nums.slice(0, idx + 1), ...nums.slice(idx + 2)]])
       stack.push([next[2], [...nums.slice(0, idx + 1), ...nums.slice(idx + 3)]])
     }
-    // wait()
   }
+
+  // const cache = new Map()
+  // function waysTo(target: number) {
+  //   if(cache.has(target)) return cache.get(target) 
+  // 
+  //   const startPoints = sorted.filter((s) => s >= target + 1 && s <= target + 3)
+  //
+  // }
 
   return seen.size
 }
