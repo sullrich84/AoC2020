@@ -12,9 +12,9 @@ const [task, sample] = read("day10")
 console.clear()
 console.log("🎄 Day 10: Adapter Array")
 
-const runPart1 = false
+const runPart1 = true
 const runPart2 = true
-const runBoth = false
+const runBoth = true
 
 /// Part 1
 
@@ -35,36 +35,13 @@ console.log("Task:\t", solve1Task)
 
 const solve2 = (data: Puzzle) => {
   const sorted = [...data].sort((a, b) => a - b)
-  const stack: [number, number[]][] = [[0, sorted]]
-  const seen = new Set()
+  const paths = { 0: 1 }
 
-  while (stack.length > 0) {
-    const [cur, nums] = stack.pop()!
-    const key = nums.join()
-    seen.add(key)
-
-    const idx = _.indexOf(nums, cur)
-    const next = nums.filter((r) => r >= cur + 1 && r <= cur + 3)
-
-    if (next.length == 1) {
-      stack.push([nums[idx + 1], nums])
-    } else if (next.length == 2) {
-      stack.push([next[0], [...nums.slice(0, idx + 1), ...nums.slice(idx + 1)]])
-      stack.push([next[1], [...nums.slice(0, idx + 1), ...nums.slice(idx + 2)]])
-    } else if (next.length == 3) {
-      stack.push([next[0], [...nums.slice(0, idx + 1), ...nums.slice(idx + 1)]])
-      stack.push([next[1], [...nums.slice(0, idx + 1), ...nums.slice(idx + 2)]])
-      stack.push([next[2], [...nums.slice(0, idx + 1), ...nums.slice(idx + 3)]])
-    }
+  for (const num of sorted) {
+    paths[num] = _.sum([1, 2, 3].map((d) => paths[num - d] || 0))
   }
 
-  const pathsToEnd: (cur: number) => number = _.memoize((cur: number) => {
-    const nextPoints = sorted.filter((s) => s >= cur + 1 && s <= cur + 3)
-    if (nextPoints.length == 0) return 1
-    return _.sum(nextPoints.map((np) => pathsToEnd(np)))
-  })
-
-  return pathsToEnd(_.first(sorted)!)
+  return paths[_.last(sorted)]
 }
 
 const solve2Sample = runPart2 ? solve2(sample) : "skipped"
