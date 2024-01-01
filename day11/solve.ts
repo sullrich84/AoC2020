@@ -40,12 +40,11 @@ function checkDir(grid: Puzzle, y: number, x: number) {
 
   for (const [dy, dx] of window) {
     let [ny, nx] = [y, x]
-    while (_.inRange(ny, 0, yLen) && _.inRange(nx, 0, xLen)) {
+    while (ny >= 0 && ny < yLen && nx >= 0 && nx < xLen) {
       ;[ny += dy, nx += dx]
       if (!_.inRange(ny, 0, yLen) || !_.inRange(nx, 0, xLen)) continue
-      const tile = grid[ny][nx]
-      if (tile == ".") continue
-      if (tile == "#") adj += 1
+      if (grid[ny][nx] == ".") continue
+      if (grid[ny][nx] == "#") adj += 1
       break
     }
   }
