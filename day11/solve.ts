@@ -1,7 +1,6 @@
 // @deno-types="npm:@types/lodash"
-import _, { flatMap, round } from "npm:lodash"
+import _, { add, flatMap, round } from "npm:lodash"
 import { read } from "../utils/Reader.ts"
-import { data } from "../day4/data.ts"
 
 type Puzzle = string[][]
 
@@ -29,6 +28,11 @@ const window = [
   [1, 1],
 ]
 
+function occupiedAdjacents(grid: Puzzle, y: number, x: number) {
+  const adj = window.map(([dy, dx]) => (grid[y + dy] || [])[x + dx] || null)
+  return _.countBy(adj, (t) => t)["#"] || 0
+}
+
 const solve1 = (grid: Puzzle) => {
   const seen = new Set()
 
@@ -37,10 +41,7 @@ const solve1 = (grid: Puzzle) => {
     for (const [y, row] of grid.entries()) {
       for (const [x, tile] of row.entries()) {
         if (tile == ".") continue
-        const adj = window.map(([dy, dx]) =>
-          (grid[y + dy] || [])[x + dx] || null
-        )
-        const adjOcc = adj.filter((t) => t == "#").length
+        const adjOcc = occupiedAdjacents(grid, y, x)
         if (tile == "L" && adjOcc == 0) nGrid[y][x] = "#"
         else if (tile == "#" && adjOcc >= 4) nGrid[y][x] = "L"
       }
