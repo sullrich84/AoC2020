@@ -68,6 +68,47 @@ console.log("Task:\t", solve1Task)
 /// Part 2
 
 const solve2 = (data: Puzzle) => {
+  let [y, x] = [0, 0]
+  let [wy, wx] = [-1, 10]
+
+  for (const [cmd, val] of data) {
+    switch (cmd) {
+      case "F":
+        y += val * wy
+        x += val * wx
+        break
+      case "N":
+        wy -= val
+        break
+      case "S":
+        wy += val
+        break
+      case "E":
+        wx += val
+        break
+      case "W":
+        wx -= val
+        break
+      case "L": {
+        let ccRot = val
+        while (ccRot > 0) {
+          ;[wy, wx] = [-wx, wy]
+          ccRot -= 90
+        }
+        break
+      }
+      case "R": {
+        let cwRot = val
+        while (cwRot > 0) {
+          ;[wy, wx] = [wx, -wy]
+          cwRot -= 90
+        }
+        break
+      }
+    }
+  }
+
+  return Math.abs(y) + Math.abs(x)
 }
 
 const solve2Sample = runPart2 ? solve2(sample) : "skipped"
