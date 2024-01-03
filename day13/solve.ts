@@ -1,6 +1,8 @@
 // @deno-types="npm:@types/lodash"
 import _ from "npm:lodash"
+import { lcm, log } from "npm:mathjs"
 import { read } from "../utils/Reader.ts"
+import { wait } from "../utils/utils.ts"
 
 type Puzzle = [number, number[]]
 
@@ -22,9 +24,9 @@ const solve1 = ([arrival, plan]: Puzzle) => {
 
   for (const id of plan) {
     if (!id) continue
-    let depature = id
-    while (depature < arrival) depature += id
-    waitingTimes.push({ id, depature, wait: depature - arrival })
+    const depature = arrival % id
+    const wait = id - depature
+    waitingTimes.push({ id, depature, wait })
   }
 
   const best = _.minBy(waitingTimes, (b) => b.wait)!
@@ -41,11 +43,28 @@ console.log("Task:\t", solve1Task)
 /// Part 2
 
 const solve2 = ([_arrival, plan]: Puzzle) => {
-  for (const id of plan) {
-    console.log(id)
+  const configs = plan
+    .map((v, i) => v != null ? [v, i] : null)
+    .filter((v) => v != null)
+
+  let time = 0
+  let step = configs.shift()[0]
+
+  while (true) {
+    let matches = 0
+    for (const [id, diff] of configs) {
+      const remainder = id - (time % id)
+      if (remainder != diff) break
+      // console.log({time, id, diff, remainder});
+      // step *= id
+      matches += 1
+    }
+
+    if (matches == configs.length) break
+    time += step
   }
 
-  return 0
+  return time
 }
 
 const solve2Sample = runPart2 ? solve2(sample) : "skipped"
