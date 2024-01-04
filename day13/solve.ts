@@ -1,8 +1,6 @@
 // @deno-types="npm:@types/lodash"
 import _ from "npm:lodash"
-import { lcm, log } from "npm:mathjs"
 import { read } from "../utils/Reader.ts"
-import { wait } from "../utils/utils.ts"
 
 type Puzzle = [number, number[]]
 
@@ -50,18 +48,15 @@ const solve2 = ([_arrival, plan]: Puzzle) => {
   let time = 0
   let step = configs.shift()[0]
 
-  while (true) {
-    let matches = 0
-    for (const [id, diff] of configs) {
-      const remainder = id - (time % id)
-      if (remainder != diff) break
-      // console.log({time, id, diff, remainder});
-      // step *= id
-      matches += 1
+  for (const [id, diff] of configs) {
+    console.log(`Looking for depatures of bus ${id} with offset ${diff}`)
+
+    while (id - (time % id) != diff) {
+      time += step
     }
 
-    if (matches == configs.length) break
-    time += step
+    console.log(`Bus ${id} departs a time ${time} with offset ${diff}`)
+    step *= id
   }
 
   return time
