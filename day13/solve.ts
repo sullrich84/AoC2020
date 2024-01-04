@@ -13,7 +13,7 @@ console.log("🎄 Day 13: Shuttle Search")
 
 const runPart1 = true
 const runPart2 = true
-const runBoth = false
+const runBoth = true
 
 /// Part 1
 
@@ -49,13 +49,7 @@ const solve2 = ([_arrival, plan]: Puzzle) => {
   let step = configs.shift()[0]
 
   for (const [id, diff] of configs) {
-    console.log(`Looking for depatures of bus ${id} with offset ${diff}`)
-
-    while (id - (time % id) != diff) {
-      time += step
-    }
-
-    console.log(`Bus ${id} departs a time ${time} with offset ${diff}`)
+    while ((time + diff) % id != 0) time += step
     step *= id
   }
 
