@@ -10,7 +10,7 @@ const [task, sample] = read("day14")
 console.clear()
 console.log("🎄 Day 14: Docking Data")
 
-const runPart1 = false
+const runPart1 = true
 const runPart2 = true
 const runBoth = true
 
@@ -32,7 +32,7 @@ const solve1 = (data: Puzzle) => {
       .map((v) => parseInt(v))
 
     const bin = decimalValue
-      .toString("2")
+      .toString(2)
       .padStart(36, "0")
       .split("")
 
@@ -57,26 +57,23 @@ console.log("Task:\t", solve1Task)
 /// Part 2
 
 const solve2 = (data: Puzzle) => {
-  const mem = {}
+  const mem: Record<number, number> = {}
   let mask: Array<string> = []
 
-  function calc(str: string, prefix: string = ""): string[] {
+  function addressesForMask(str: string, prefix = ""): string[] {
     const cur = str.substring(0, 1)
     if (str.length == 1) {
       return cur == "X" ? [prefix + "1", prefix + "0"] : [prefix + cur]
     }
 
     if (cur == "X") {
-      const ones = calc(str.substring(1), prefix + "1")
-      const zeros = calc(str.substring(1), prefix + "0")
-      return _.flatMap([ones, zeros])
+      const ones = addressesForMask(str.substring(1), prefix + "1")
+      const zeros = addressesForMask(str.substring(1), prefix + "0")
+      return [...ones, ...zeros]
     }
 
-    return calc(str.substring(1), prefix + cur)
+    return addressesForMask(str.substring(1), prefix + cur)
   }
-
-  // const bins = calc("00000000000000000000000000000001X0XX").map(v => parseInt(v, 2))
-  // console.log(bins, bins.length)
 
   for (const line of data) {
     if (line.startsWith("mask")) {
@@ -90,7 +87,7 @@ const solve2 = (data: Puzzle) => {
       .map((v) => parseInt(v))
 
     const bin = address
-      .toString("2")
+      .toString(2)
       .padStart(36, "0")
       .split("")
 
@@ -99,31 +96,11 @@ const solve2 = (data: Puzzle) => {
       bin[i] = mask[i]
     }
 
-    bin.reverse()
-
-    const steady = bin
-      .map((v, i) => v == "1" ? i : null)
-      .filter((v) => v != null)
-      .reduce((p, c) => p += Math.pow(2, c), 0)
-
-    const floaty = bin
-      .map((v, i) => v == "X" ? i : null)
-      .filter((v) => v != null)
-      .map((v) => Math.pow(2, v))
-
-    mem[steady] = value
-    mem[steady + _.sum(floaty)] = value
-
-    for (let i = 0; i < floaty.length; i++) {
-      mem[steady + floaty[i]] = value
-      for (let ii = 0; ii < floaty.length; ii++) {
-        if (i == ii) continue
-        mem[steady + floaty[i] + floaty[ii]] = value
-      }
-    }
+    addressesForMask(bin.join(""))
+      .map((v) => parseInt(v, 2))
+      .forEach((addr) => mem[addr] = value)
   }
 
-  // > 614703016144
   return _.sum(_.values(mem))
 }
 
