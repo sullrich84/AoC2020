@@ -33,8 +33,10 @@ const solve1 = (data: Puzzle, nth: number) => {
     const next = history.length > 1
       ? history.slice(-2).reduce((p, c) => c - p, 0)
       : 0
-    
-    spoken[next] != undefined ? spoken[next] = [_.last(spoken[next]), i] : spoken[next] = [i]
+
+    spoken[next] != undefined
+      ? spoken[next] = [_.last(spoken[next]), i]
+      : spoken[next] = [i]
     lastSpoken = next
   }
 
@@ -42,7 +44,7 @@ const solve1 = (data: Puzzle, nth: number) => {
 }
 
 const solve1Sample = runPart1 ? solve1(sample, 2020) : "skipped"
-const solve1Task = runPart1 && runBoth ? solve1(task,2020) : "skipped"
+const solve1Task = runPart1 && runBoth ? solve1(task, 2020) : "skipped"
 
 console.log("\nPart 1:")
 console.log("Sample:\t", solve1Sample)
