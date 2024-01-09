@@ -2,31 +2,37 @@
 import _ from "npm:lodash"
 import { read } from "../utils/Reader.ts"
 
-type Puzzle = [[number, number, number, number][], number[], number[]][]
+type Puzzle = {
+  fields: { name: string; range: number[] }[]
+  tickets: number[]
+  nearbys: number[]
+}
 
-const [task, sample] = read("day16")
-  .map((file) => file.split("\n\n"))
+const [task, sample] = read("day16").map((file) => file.split("\n\n"))
   .map((file) => file.map((l) => l.split("\n")))
-  .map(([fields, ticket, nearbys]) => {
-    fields = fields
-      .map((l) => _.tail(l.match(/.+: (\d+)-(\d+) or (\d+)-(\d+)/)))
-      .map((l) => l.map((c) => parseInt(c) || c))
+  .map(([fields, ticket, nearbys]) => ({
+    fields: fields
+      .map((l) => _.tail(l.match(/(.+): (\d+)-(\d+) or (\d+)-(\d+)/)))
+      .map(([name, ...nums]) => ({
+        name,
+        range: nums.map((n) => parseInt(n)),
+      })),
 
-    ticket = ticket[1]
+    tickets: ticket[1]
       .split(",")
-      .map((t) => parseInt(t))
+      .map((t) => parseInt(t)),
 
-    nearbys = _.tail(nearbys)
+    nearbys: _.tail(nearbys)
       .join(",")
       .split(",")
       .filter((n) => n != "")
-      .map((n) => parseInt(n))
-
-    return [fields, ticket, nearbys]
-  })
+      .map((n) => parseInt(n)),
+  }))
 
 console.clear()
 console.log("🎄 Day 16: Ticket Translation")
+
+console.log(sample)
 
 const runPart1 = true
 const runPart2 = false
@@ -34,13 +40,14 @@ const runBoth = true
 
 /// Part 1
 
-const solve1 = ([fields, tickets, nearbys]: Puzzle) => {
+const solve1 = ({ fields, nearbys }: Puzzle) => {
   const validField = (val: number) => {
-    for (const [s1, e1, s2, e2] of fields) {
-      if (_.inRange(val, s1, e1 + 1) || _.inRange(val, s2, e2 + 1)) {
-        return true
-      }
+    for (const { range } of fields) {
+      const inFirstRange = _.inRange(val, range[0], range[1] + 1)
+      const inSecondRange = _.inRange(val, range[2], range[3] + 1)
+      if (inFirstRange || inSecondRange) return true
     }
+
     return false
   }
 
