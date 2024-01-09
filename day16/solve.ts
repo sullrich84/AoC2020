@@ -1,41 +1,36 @@
 // @deno-types="npm:@types/lodash"
-import _ from "npm:lodash"
+import _, { lowerCase } from "npm:lodash"
 import { read } from "../utils/Reader.ts"
+import { wait } from "../utils/utils.ts"
 
 type Puzzle = {
   fields: { name: string; range: number[] }[]
-  tickets: number[]
-  nearbys: number[]
+  ticket: number[]
+  nearbys: number[][]
 }
 
 const [task, sample] = read("day16").map((file) => file.split("\n\n"))
-  .map((file) => file.map((l) => l.split("\n")))
   .map(([fields, ticket, nearbys]) => ({
-    fields: fields
+    fields: fields.split("\n")
       .map((l) => _.tail(l.match(/(.+): (\d+)-(\d+) or (\d+)-(\d+)/)))
       .map(([name, ...nums]) => ({
         name,
         range: nums.map((n) => parseInt(n)),
       })),
 
-    tickets: ticket[1]
+    ticket: ticket.split("\n")[1]
       .split(",")
       .map((t) => parseInt(t)),
 
-    nearbys: _.tail(nearbys)
-      .join(",")
-      .split(",")
-      .filter((n) => n != "")
-      .map((n) => parseInt(n)),
+    nearbys: nearbys.split("\n").slice(1, -1)
+      .map((l) => l.split(",").map((n) => parseInt(n))),
   }))
 
 console.clear()
 console.log("🎄 Day 16: Ticket Translation")
 
-console.log(sample)
-
-const runPart1 = true
-const runPart2 = false
+const runPart1 = false
+const runPart2 = true
 const runBoth = true
 
 /// Part 1
@@ -51,7 +46,7 @@ const solve1 = ({ fields, nearbys }: Puzzle) => {
     return false
   }
 
-  return _.sum(nearbys.filter((n) => !validField(n)))
+  return _.sum(_.flatMap(nearbys).filter((n) => !validField(n)))
 }
 
 const solve1Sample = runPart1 ? solve1(sample) : "skipped"
@@ -63,7 +58,25 @@ console.log("Task:\t", solve1Task)
 
 /// Part 2
 
-const solve2 = (data: Puzzle) => {
+const solve2 = ({ fields, ticket, nearbys }: Puzzle) => {
+  const mappings = []
+  for (let i = 0; i < ticket.length; i++) {
+    const possible = []
+    for (const nearby of nearbys) {
+      const number = nearby[i]
+      const mapping = fields
+        .filter((f) =>
+          _.inRange(number, f.range[0], f.range[1] + 1) ||
+          _.inRange(number, f.range[2], f.range[3] + 1)
+        )
+        .map((f) => f.name)
+      possible.push(mapping)
+    }
+    mappings.push(possible)
+  }
+
+  console.log(mappings)
+  wait()
 }
 
 const solve2Sample = runPart2 ? solve2(sample) : "skipped"
