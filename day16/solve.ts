@@ -1,5 +1,5 @@
 // @deno-types="npm:@types/lodash"
-import _, { lowerCase } from "npm:lodash"
+import _, { lowerCase, map } from "npm:lodash"
 import { read } from "../utils/Reader.ts"
 import { wait } from "../utils/utils.ts"
 
@@ -59,24 +59,23 @@ console.log("Task:\t", solve1Task)
 /// Part 2
 
 const solve2 = ({ fields, ticket, nearbys }: Puzzle) => {
-  const mappings = []
-  for (let i = 0; i < ticket.length; i++) {
-    const possible = []
-    for (const nearby of nearbys) {
-      const number = nearby[i]
+  const fieldNames = fields.map((f) => f.name)
+  const vMap = new Array(ticket.length).fill(fieldNames)
+  
+  for (let pos = 0; pos < ticket.length; pos++) {
+    for (let n = 0; n < nearbys.length; n++) {
+      const number = nearbys[n][pos]
       const mapping = fields
         .filter((f) =>
           _.inRange(number, f.range[0], f.range[1] + 1) ||
           _.inRange(number, f.range[2], f.range[3] + 1)
         )
         .map((f) => f.name)
-      possible.push(mapping)
+      vMap[pos] = _.intersection(vMap[pos], mapping)
     }
-    mappings.push(possible)
   }
 
-  console.log(mappings)
-  wait()
+  return vMap
 }
 
 const solve2Sample = runPart2 ? solve2(sample) : "skipped"
