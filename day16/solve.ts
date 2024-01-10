@@ -1,7 +1,6 @@
 // @deno-types="npm:@types/lodash"
-import _, { lowerCase, map } from "npm:lodash"
+import _ from "npm:lodash"
 import { read } from "../utils/Reader.ts"
-import { wait } from "../utils/utils.ts"
 
 type Puzzle = {
   fields: { name: string; range: number[] }[]
@@ -29,7 +28,7 @@ const [task, sample] = read("day16").map((file) => file.split("\n\n"))
 console.clear()
 console.log("🎄 Day 16: Ticket Translation")
 
-const runPart1 = false
+const runPart1 = true
 const runPart2 = true
 const runBoth = true
 
@@ -59,23 +58,30 @@ console.log("Task:\t", solve1Task)
 /// Part 2
 
 const solve2 = ({ fields, ticket, nearbys }: Puzzle) => {
-  const fieldNames = fields.map((f) => f.name)
-  const vMap = new Array(ticket.length).fill(fieldNames)
-  
-  for (let pos = 0; pos < ticket.length; pos++) {
-    for (let n = 0; n < nearbys.length; n++) {
-      const number = nearbys[n][pos]
-      const mapping = fields
-        .filter((f) =>
-          _.inRange(number, f.range[0], f.range[1] + 1) ||
-          _.inRange(number, f.range[2], f.range[3] + 1)
-        )
-        .map((f) => f.name)
-      vMap[pos] = _.intersection(vMap[pos], mapping)
+  const matchingFields = (n: number) =>
+    fields.filter(({ range: [s1, e1, s2, e2] }) =>
+      n >= s1 && n <= e1 || n >= s2 && n <= e2
+    ).map((f) => f.name)
+
+  const invalidField = (f: number) => _.isEmpty(matchingFields(f))
+  const invalidTicket = (t: number[]) => t.some((n) => invalidField(n))
+
+  const validNearbys = nearbys.filter((n) => !invalidTicket(n))
+  const mapping = validNearbys.map((nb) => nb.map((n) => matchingFields(n)))
+  const iCol = (c: number) => _.intersection(..._.map(mapping, (r) => r[c]))
+
+  const lookup: Record<string, number> = {}
+  while (_.keys(lookup).length != mapping[0].length) {
+    for (let c = 0; c < mapping[0].length; c++) {
+      const res = _.without(iCol(c).map((v) => v), ..._.keys(lookup))
+      if (res.length == 1) lookup[res[0]] = c
     }
   }
 
-  return vMap
+  return _.entries<number>(lookup)
+    .filter(([name]) => name.startsWith("departure"))
+    .map(([_n, idx]) => ticket[idx])
+    .reduce((p, c) => p * c, 1)
 }
 
 const solve2Sample = runPart2 ? solve2(sample) : "skipped"
