@@ -1,5 +1,5 @@
 // @deno-types="npm:@types/lodash"
-import _, { split } from "npm:lodash"
+import _, { split, values } from "npm:lodash"
 import { read } from "../utils/Reader.ts"
 import { wait } from "../utils/utils.ts"
 
@@ -13,48 +13,43 @@ console.clear()
 console.log("🎄 Day 17: Conway Cubes")
 
 const runPart1 = true
-const runPart2 = false
+const runPart2 = true
 const runBoth = true
 
 /// Part 1
 
-type Grid = { z: number; y: number; x: number; cube: string }[]
-type Cube = { z: number; y: number; x: number }
+type HyperCube = { w: number; z: number; y: number; x: number }
 
-// function drawGrid(grid: Grid) {
-//   const ys = grid.map(({ y }) => y)
-//   const xs = grid.map(({ x }) => x)
-//   const [yMin, yMax] = [_.min(ys), _.max(ys)]
-//   const [xMin, xMax] = [_.min(xs), _.max(xs)]
-//
-//   for (const y of _.range(yMin, yMax + 1)) {
-//     let line = ""
-//     for (const x of _.range(xMin, xMax + 1)) {
-//       const cube = grid.findIndex((cube) => cube.y === y && cube.x === x)
-//       line += cube === -1 ? "." : "#"
-//     }
-//     console.log(line)
-//   }
-//
-//   wait()
-// }
+const solve = (data: Puzzle, extraDim = false) => {
+  const grid: Map<string, HyperCube> = new Map()
 
-const solve1 = (data: Puzzle, rounds = 6) => {
-  const grid = data
-    .map((row, y) => row.map((cube, x) => ({ z: 0, y, x, cube }))).flat()
+  function key({ w, z, y, x }: HyperCube) {
+    return [w, z, y, x].join(":")
+  }
+
+  data
+    .map((row, y) => row.map((cube, x) => ({ w: 0, z: 0, y, x, cube }))).flat()
     .filter(({ cube }) => cube == "#")
-    .map(({ y, x, z }) => ({ z, y, x }))
+    .map(({ w, y, x, z }) => ({ w, z, y, x }))
+    .forEach((cube) => grid.set(key(cube), cube))
 
-  function neighbors(cube: Cube) {
+  function neighbors(cube: HyperCube) {
     const arr = []
     const win = [-1, 0, 1]
 
-    for (const dz of win) {
-      for (const dy of win) {
-        for (const dx of win) {
-          const nCube = { z: cube.z + dz, y: cube.y + dy, x: cube.x + dx }
-          if (_.isEqual(cube, nCube)) continue
-          arr.push(nCube)
+    for (const dw of extraDim ? win : [0]) {
+      for (const dz of win) {
+        for (const dy of win) {
+          for (const dx of win) {
+            const nCube = {
+              w: cube.w + dw,
+              z: cube.z + dz,
+              y: cube.y + dy,
+              x: cube.x + dx,
+            }
+            if (_.isEqual(cube, nCube)) continue
+            arr.push(nCube)
+          }
         }
       }
     }
@@ -62,31 +57,36 @@ const solve1 = (data: Puzzle, rounds = 6) => {
     return arr
   }
 
-  // console.log(grid)
-  // console.log(_.intersectionWith(grid, [{ z: 0, y: 0, x: 1 }], _.isEqual))
+  let state = _.clone(grid)
+  for (let r = 0; r < 6; r++) {
+    const nState: Map<string, HyperCube> = new Map()
+    const stateValues = [...state.values()]
 
-  let state = _.cloneDeep(grid)
-  for (let r = 0; r < rounds; r++) {
-    const nState = []
+    const ws = stateValues.map(({ w }) => w)
+    const zs = stateValues.map(({ z }) => z)
+    const ys = stateValues.map(({ y }) => y)
+    const xs = stateValues.map(({ x }) => x)
 
-    const zs = state.map(({ z }) => z)
-    const ys = state.map(({ y }) => y)
-    const xs = state.map(({ x }) => x)
-
+    const [wMin, wMax] = [_.min(ws)! - 1, _.max(ws)! + 1]
     const [zMin, zMax] = [_.min(zs)! - 1, _.max(zs)! + 1]
     const [yMin, yMax] = [_.min(ys)! - 1, _.max(ys)! + 1]
     const [xMin, xMax] = [_.min(xs)! - 1, _.max(xs)! + 1]
 
-    for (const z of _.range(zMin, zMax + 1)) {
-      for (const y of _.range(yMin, yMax + 1)) {
-        for (const x of _.range(xMin, xMax + 1)) {
-          const cube = { z, y, x }
-          const active = _.some(state, cube)
-          const neighbor = neighbors(cube)
-          const nActive = _.intersectionWith(state, neighbor, _.isEqual).length
+    for (const w of _.range(wMin, wMax + 1)) {
+      for (const z of _.range(zMin, zMax + 1)) {
+        for (const y of _.range(yMin, yMax + 1)) {
+          for (const x of _.range(xMin, xMax + 1)) {
+            const cube = { w, z, y, x }
+            const cubeKey = key(cube)
 
-          if (active && (nActive == 2 || nActive == 3)) nState.push(cube)
-          if (!active && nActive == 3) nState.push(cube)
+            const active = state.has(cubeKey)
+            const neighborKeys = neighbors(cube).map((n) => key(n))
+            const nActive = neighborKeys.filter((nk) => state.has(nk)).length
+
+            const rule1 = active && (nActive == 2 || nActive == 3)
+            const rule2 = !active && nActive == 3
+            if (rule1 || rule2) nState.set(cubeKey, cube)
+          }
         }
       }
     }
@@ -94,11 +94,11 @@ const solve1 = (data: Puzzle, rounds = 6) => {
     state = _.cloneDeep(nState)
   }
 
-  return state.length
+  return state.size
 }
 
-const solve1Sample = runPart1 ? solve1(sample) : "skipped"
-const solve1Task = runPart1 && runBoth ? solve1(task) : "skipped"
+const solve1Sample = runPart1 ? solve(sample, false) : "skipped"
+const solve1Task = runPart1 && runBoth ? solve(task, false) : "skipped"
 
 console.log("\nPart 1:")
 console.log("Sample:\t", solve1Sample)
@@ -106,11 +106,8 @@ console.log("Task:\t", solve1Task)
 
 /// Part 2
 
-const solve2 = (data: Puzzle) => {
-}
-
-const solve2Sample = runPart2 ? solve2(sample) : "skipped"
-const solve2Task = runPart2 && runBoth ? solve2(task) : "skipped"
+const solve2Sample = runPart2 ? solve(sample, true) : "skipped"
+const solve2Task = runPart2 && runBoth ? solve(task, true) : "skipped"
 
 console.log("\nPart 2:")
 console.log("Sample:\t", solve2Sample)
