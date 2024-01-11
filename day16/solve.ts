@@ -68,13 +68,13 @@ const solve2 = ({ fields, ticket, nearbys }: Puzzle) => {
 
   const validNearbys = nearbys.filter((n) => !invalidTicket(n))
   const mapping = validNearbys.map((nb) => nb.map((n) => matchingFields(n)))
-  const iCol = (c: number) => _.intersection(..._.map(mapping, (r) => r[c]))
+  const colIntersection = (c: number) => _.intersection(..._.map(mapping, (r) => r[c]))
 
   const lookup: Record<string, number> = {}
   while (_.keys(lookup).length != mapping[0].length) {
-    for (let c = 0; c < mapping[0].length; c++) {
-      const res = _.without(iCol(c).map((v) => v), ..._.keys(lookup))
-      if (res.length == 1) lookup[res[0]] = c
+    for (let idx = 0; idx < mapping[0].length; idx++) {
+      const res = _.without(colIntersection(idx).map((v) => v), ..._.keys(lookup))
+      if (res.length == 1) lookup[res[0]] = idx
     }
   }
 
