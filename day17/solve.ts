@@ -1,5 +1,5 @@
 // @deno-types="npm:@types/lodash"
-import _, { split, values } from "npm:lodash"
+import _ from "npm:lodash"
 import { read } from "../utils/Reader.ts"
 import { wait } from "../utils/utils.ts"
 
