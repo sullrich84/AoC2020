@@ -1,5 +1,5 @@
 // @deno-types="npm:@types/lodash"
-import _ from "npm:lodash"
+import _, { some } from "npm:lodash"
 import { read } from "../utils/Reader.ts"
 
 type Puzzle = string[][]
@@ -7,7 +7,6 @@ type Puzzle = string[][]
 const [task, sample] = read("day18")
   .map((file) => file.replaceAll(" ", "").split("\n").slice(0, -1))
   .map((file) => file.map((line) => line.split("")))
-  .map((file) => file.map((line) => line.map((v) => parseInt(v) || v)))
 
 console.clear()
 console.log("🎄 Day 18: Operation Order")
@@ -19,21 +18,43 @@ const runBoth = false
 /// Part 1
 
 const solve1 = (data: Puzzle) => {
-  let result = 0
+  function solve(expression: string[]): number {
+    let subResult = parseInt(expression.shift()!)
 
-  for (const row of data.slice(0, 1)) {
-    let subResult = row.shift()
-
-    while (row.length > 0) {
-      const [nOp, n] = [row.shift(), row.shift()]
-      if (nOp == "+") subResult += n
-      else subResult *= n
+    while (expression.length > 0) {
+      const [nOp, n] = [expression.shift()!, expression.shift()!]
+      nOp == "+" ? subResult += parseInt(n) : subResult *= parseInt(n)
     }
 
-    result += subResult
+    return subResult
   }
 
-  return result
+  function flat(expression: string[]): number {
+    if (!_.some(expression, (e) => e == "(")) return solve(expression)
+
+    const startIdx = expression.findIndex((v) => v == "(")
+    let [cur, open, endIdx] = [1, 1, 1]
+
+    for (let i = startIdx + 1; i < expression.length; i++) {
+      ;[cur, endIdx] = [expression[i], i]
+      if (cur == "(") open += 1
+      if (cur == ")") open -= 1
+      if (open == 0) break
+    }
+
+    console.log("clean:", ...expression.slice(startIdx + 1, endIdx))
+    
+    const clean = [
+      ...expression.slice(0, startIdx),
+      flat(expression.slice(startIdx + 1, endIdx)),
+      ...expression.slice(endIdx + 1),
+    ]
+
+    return solve(clean)
+  }
+
+  console.log(flat("5+(((2*4)*2)+1)+9*2".split("")))
+  return data.map((row) => solve(row))
 }
 
 const solve1Sample = runPart1 ? solve1(sample) : "skipped"
