@@ -7,6 +7,7 @@ type Puzzle = string[][]
 const [task, sample] = read("day18")
   .map((file) => file.replaceAll(" ", "").split("\n").slice(0, -1))
   .map((file) => file.map((line) => line.split("")))
+  .map((file) => file.map((line) => line.map((v) => parseInt(v) || v)))
 
 console.clear()
 console.log("🎄 Day 18: Operation Order")
@@ -18,9 +19,21 @@ const runBoth = false
 /// Part 1
 
 const solve1 = (data: Puzzle) => {
-  for (const row of data) {
-    console.log(row)
+  let result = 0
+
+  for (const row of data.slice(0, 1)) {
+    let subResult = row.shift()
+
+    while (row.length > 0) {
+      const [nOp, n] = [row.shift(), row.shift()]
+      if (nOp == "+") subResult += n
+      else subResult *= n
+    }
+
+    result += subResult
   }
+
+  return result
 }
 
 const solve1Sample = runPart1 ? solve1(sample) : "skipped"
