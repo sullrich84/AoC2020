@@ -5,8 +5,9 @@ import { read } from "../utils/Reader.ts"
 type Puzzle = string[][]
 
 const [task, sample] = read("day18")
-  .map((file) => file.replaceAll(" ", "").split("\n").slice(0, -1))
-  .map((file) => file.map((line) => line.split("")))
+  .map((file) => file.split("\n").slice(0, -1))
+  .map((file) => file.map((line) => line.split(" ")))
+  .map((file) => file.map((line) => line.map((l) => l.split("")).flat()))
 
 console.clear()
 console.log("🎄 Day 18: Operation Order")
@@ -29,12 +30,19 @@ const solve1 = (data: Puzzle) => {
     return subResult
   }
 
-  function flat(expression: string[]): number {
-    if (!_.some(expression, (e) => e == "(")) return solve(expression)
+  function calc(expression: string[]): number {
+    console.log("CALC:", expression)
 
-    const startIdx = expression.findIndex((v) => v == "(")
+    if (expression.indexOf("(") == -1) {
+      const done = solve(expression.split(""))
+      console.log("DONE:", expression, done)
+      return done
+    }
+
+    const startIdx = expression.indexOf("(")
     let [cur, open, endIdx] = [1, 1, 1]
 
+    // Find closing bracket
     for (let i = startIdx + 1; i < expression.length; i++) {
       ;[cur, endIdx] = [expression[i], i]
       if (cur == "(") open += 1
@@ -42,19 +50,15 @@ const solve1 = (data: Puzzle) => {
       if (open == 0) break
     }
 
-    console.log("clean:", ...expression.slice(startIdx + 1, endIdx))
-    
-    const clean = [
-      ...expression.slice(0, startIdx),
-      flat(expression.slice(startIdx + 1, endIdx)),
-      ...expression.slice(endIdx + 1),
-    ]
+    const pre = expression.substring(0, startIdx)
+    const rep = expression.substring(startIdx + 1, endIdx)
+    const post = expression.substring(endIdx + 1)
 
-    return solve(clean)
+    return calc(pre + calc(rep) + post)
   }
 
-  console.log(flat("5+(((2*4)*2)+1)+9*2".split("")))
-  return data.map((row) => solve(row))
+  console.log(calc("1+(2*2)+1+(2*2)*2"))
+  // return data
 }
 
 const solve1Sample = runPart1 ? solve1(sample) : "skipped"
