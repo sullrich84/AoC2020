@@ -1,5 +1,5 @@
 // @deno-types="npm:@types/lodash"
-import _, { some } from "npm:lodash"
+import _, { lowerCase, some } from "npm:lodash"
 import { read } from "../utils/Reader.ts"
 
 type Puzzle = string[][]
@@ -12,37 +12,25 @@ const [task, sample] = read("day18")
 console.clear()
 console.log("🎄 Day 18: Operation Order")
 
-const runPart1 = true
-const runPart2 = false
-const runBoth = false
+const runPart1 = false
+const runPart2 = true
+const runBoth = true
 
 /// Part 1
 
 const solve1 = (data: Puzzle) => {
-  function solve(expression: string[]): number {
-    let subResult = parseInt(expression.shift()!)
-
-    while (expression.length > 0) {
-      const [nOp, n] = [expression.shift()!, expression.shift()!]
-      nOp == "+" ? subResult += parseInt(n) : subResult *= parseInt(n)
-    }
-
-    return subResult
-  }
-
   function calc(expression: string[]): number {
-    console.log("CALC:", expression)
-
     if (expression.findIndex((v) => v == "(") == -1) {
-      const done = solve(expression)
-      console.log("DONE:", expression, done)
-      return done
+      let subResult = parseInt(expression.shift()!)
+      while (expression.length > 0) {
+        const [nOp, n] = [expression.shift()!, expression.shift()!]
+        nOp == "+" ? subResult += parseInt(n) : subResult *= parseInt(n)
+      }
+      return subResult
     }
 
     const startIdx = expression.findIndex((v) => v == "(")
-    let [cur, open, endIdx] = [1, 1, 1]
-
-    // Find closing bracket
+    let [cur, open, endIdx] = ["", 1, 1]
     for (let i = startIdx + 1; i < expression.length; i++) {
       ;[cur, endIdx] = [expression[i], i]
       if (cur == "(") open += 1
@@ -54,11 +42,10 @@ const solve1 = (data: Puzzle) => {
     const rep = expression.slice(startIdx + 1, endIdx)
     const post = expression.slice(endIdx + 1)
 
-    return calc([...pre, calc(rep), ...post])
+    return calc([...pre, calc(rep).toString(), ...post])
   }
 
-  console.log(calc("1+(2*2)+1+(2*2)*2".split("")))
-  // return data
+  return _.sum(data.map(calc))
 }
 
 const solve1Sample = runPart1 ? solve1(sample) : "skipped"
@@ -71,6 +58,40 @@ console.log("Task:\t", solve1Task)
 /// Part 2
 
 const solve2 = (data: Puzzle) => {
+  function calc(expression: string[]): number {
+    if (expression.findIndex((v) => v == "(") == -1) {
+      let nExp = [...expression]
+      let opIdx = nExp.findIndex((v) => v == "+")
+
+      while (opIdx != -1) {
+        const pre = nExp.slice(0, opIdx - 1)
+        const add = nExp.slice(opIdx - 1, opIdx + 2)
+        const post = nExp.slice(opIdx + 2)
+
+        nExp = [...pre, eval(add.join("")).toString(), ...post]
+        opIdx = nExp.findIndex((v) => v == "+")
+      }
+
+      return eval(nExp.join(""))
+    }
+
+    const startIdx = expression.findIndex((v) => v == "(")
+    let [cur, open, endIdx] = ["", 1, 1]
+    for (let i = startIdx + 1; i < expression.length; i++) {
+      ;[cur, endIdx] = [expression[i], i]
+      if (cur == "(") open += 1
+      if (cur == ")") open -= 1
+      if (open == 0) break
+    }
+
+    const pre = expression.slice(0, startIdx)
+    const rep = expression.slice(startIdx + 1, endIdx)
+    const post = expression.slice(endIdx + 1)
+
+    return calc([...pre, calc(rep).toString(), ...post])
+  }
+
+  return _.sum(data.map(calc))
 }
 
 const solve2Sample = runPart2 ? solve2(sample) : "skipped"
