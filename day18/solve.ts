@@ -33,13 +33,13 @@ const solve1 = (data: Puzzle) => {
   function calc(expression: string[]): number {
     console.log("CALC:", expression)
 
-    if (expression.indexOf("(") == -1) {
-      const done = solve(expression.split(""))
+    if (expression.findIndex((v) => v == "(") == -1) {
+      const done = solve(expression)
       console.log("DONE:", expression, done)
       return done
     }
 
-    const startIdx = expression.indexOf("(")
+    const startIdx = expression.findIndex((v) => v == "(")
     let [cur, open, endIdx] = [1, 1, 1]
 
     // Find closing bracket
@@ -50,14 +50,14 @@ const solve1 = (data: Puzzle) => {
       if (open == 0) break
     }
 
-    const pre = expression.substring(0, startIdx)
-    const rep = expression.substring(startIdx + 1, endIdx)
-    const post = expression.substring(endIdx + 1)
+    const pre = expression.slice(0, startIdx)
+    const rep = expression.slice(startIdx + 1, endIdx)
+    const post = expression.slice(endIdx + 1)
 
-    return calc(pre + calc(rep) + post)
+    return calc([...pre, calc(rep), ...post])
   }
 
-  console.log(calc("1+(2*2)+1+(2*2)*2"))
+  console.log(calc("1+(2*2)+1+(2*2)*2".split("")))
   // return data
 }
 
