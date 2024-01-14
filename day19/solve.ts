@@ -16,8 +16,8 @@ const [task, sample] = read("day19")
   .map(([r, m]) => {
     const rules = r.split("\n").map((e) => {
       const [name, sub] = e.split(": ")
-      let right: number[] = sub.split(" ").map((v) => parseInt(v) || v)
-      let left: number[] = []
+      let right: string[] = sub.split(" ")
+      let left: string[] = []
 
       const idx = right.findIndex((e) => e == "|")
       if (idx != -1) {
@@ -46,9 +46,21 @@ const runBoth = false
 /// Part 1
 
 const solve1 = ([rules, messages]: Puzzle) => {
-  for (const message of messages) {
-    console.log(message);
+  const rule0 = rules.find(({ name }) => name == "0")!
+  const ruleA = rules.find(({ main }) => main == "a")!
+  const ruleB = rules.find(({ main }) => main == "b")!
+
+  const perms = (id: string) => {
+    const rule = rules[id]
+    if (rule.main != null) return rule.main
+
+    const right = [...rule.right.map((r) => perms(r))]
+    const left = [...rule.left.map((l) => perms(l))]
+
+    return [right, left]
   }
+
+  return perms("2")
 }
 
 const solve1Sample = runPart1 ? solve1(sample) : "skipped"
