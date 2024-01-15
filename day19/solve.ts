@@ -50,17 +50,27 @@ const solve1 = ([rules, messages]: Puzzle) => {
   const ruleA = rules.find(({ main }) => main == "a")!
   const ruleB = rules.find(({ main }) => main == "b")!
 
-  const perms = (id: string) => {
-    const rule = rules[id]
-    if (rule.main != null) return rule.main
-
-    const right = [...rule.right.map((r) => perms(r))]
-    const left = [...rule.left.map((l) => perms(l))]
-
-    return [right, left]
+  const group = (arr: string[]) => {
+    if (_.isEmpty(arr)) return ""
+    return "(" + arr.filter((e) => !_.isEmpty(e)).join("") + ")"
   }
 
-  return perms("2")
+  const orGroup = (arr: string[]) => {
+    if (_.isEmpty(arr)) return ""
+    return "(" + arr.filter((e) => !_.isEmpty(e)).join("|") + ")"
+  }
+
+  const buildMatcher = _.memoize((id: string) => {
+    const { main, right, left } = rules[id]
+    if (main) return [main]
+
+    const r = right.map((r) => buildMatcher(r))
+    const l = left.map((l) => buildMatcher(l))
+    return orGroup([group(r), group(l)])
+  })
+
+  const regex = RegExp("^" + buildMatcher("0") + "$")
+  return messages.filter((msg) => msg.match(regex)).length
 }
 
 const solve1Sample = runPart1 ? solve1(sample) : "skipped"
