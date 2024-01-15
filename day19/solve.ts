@@ -41,7 +41,7 @@ console.log("🎄 Day 19: Monster Messages")
 
 const runPart1 = true
 const runPart2 = false
-const runBoth = false
+const runBoth = true
 
 /// Part 1
 
@@ -60,24 +60,56 @@ const solve1 = ([rules, messages]: Puzzle) => {
     return "(" + arr.filter((e) => !_.isEmpty(e)).join("|") + ")"
   }
 
-  const buildMatcher = _.memoize((id: string) => {
-    const { main, right, left } = rules[id]
-    if (main) return [main]
+  const buildMatcher = (id: string) => {
+    const { main, right, left } = rules.find(({ name }) => name == id)!
+    if (main != null) return [main]
 
     const r = right.map((r) => buildMatcher(r))
     const l = left.map((l) => buildMatcher(l))
     return orGroup([group(r), group(l)])
-  })
+  }
+
+  // const seen = new Set()
+  // const stack = [ruleA.name, ruleB.name]
+  // while (stack.length > 0) {
+  //   const id = stack.shift()
+  //
+  //   if (seen.has(id)) continue
+  //   seen.add(id)
+  //
+  //   // const { right, left } = rules[id]
+  //   // console.log("Children", id, right.length, left.length)
+  //   // if (right.length + left.length > 10) {
+  //   //   stack.push(id)
+  //   //   console.log("Skipping", id)
+  //   //   continue
+  //   // }
+  //   //
+  //   // buildMatcher(id)
+  //
+  //   const r = rules
+  //     .filter(({ right }) => _.includes(right, id))
+  //     .map(({ name }) => name)
+  //
+  //   const l = rules
+  //     .filter(({ left }) => _.includes(left, id))
+  //     .map(({ name }) => name)
+  //
+  //   console.log({ id, r: r.join(), l: l.join() })
+  //   stack.push(...r)
+  //   stack.push(...l)
+  // }
+
 
   const regex = RegExp("^" + buildMatcher("0") + "$")
   return messages.filter((msg) => msg.match(regex)).length
 }
 
-const solve1Sample = runPart1 ? solve1(sample) : "skipped"
+// const solve1Sample = runPart1 ? solve1(sample) : "skipped"
 const solve1Task = runPart1 && runBoth ? solve1(task) : "skipped"
 
 console.log("\nPart 1:")
-console.log("Sample:\t", solve1Sample)
+// console.log("Sample:\t", solve1Sample)
 console.log("Task:\t", solve1Task)
 
 /// Part 2
