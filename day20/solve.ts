@@ -5,7 +5,7 @@ import { read } from "../utils/Reader.ts"
 type Puzzle = [number, string[]][]
 
 const [task, sample] = read("day20")
-  .map((file) => file.split("\n\n"))
+  .map((file) => file.split("\n\n").slice(0, -1))
   .map((file) =>
     file.map((packet) => {
       const [tile, ...grid] = packet.split("\n")
@@ -25,24 +25,48 @@ const runBoth = false
 
 const solve1 = (data: Puzzle) => {
   const len = Math.sqrt(data.length)
-  const grids: Record<number, Record<string, string[][]>> = {}
   const reverse = (str: string) => str.split("").reverse().join("")
-  const rotate = (arr: string[3]) => [arr[3], arr[0], arr[1], arr[2]]
+  const rotate = (arr: string[]) => [arr[3], arr[0], arr[1], arr[2]]
+  const toDirObject = (arr: string[]) => ({
+    north: arr[0],
+    east: arr[1],
+    south: arr[2],
+    west: arr[3],
+  })
 
+  const edges = []
   for (const [id, grid] of data) {
-    const north = _.first(grid)
-    const east = grid.map((c) => _.last(c)).join("")
-    const south = reverse(_.last(grid))
-    const west = reverse(grid.map((c) => _.first(c)).join(""))
-    
-    grids[id] = { 0: [], 90: [], 180: [], 270: []}
-    grids[id][0] = [north, east, south, west]
-    grids[id][90] = rotate(grids[id][0])
-    grids[id][180] = rotate(grids[id][90])
-    grids[id][270] = rotate(grids[id][180])
+    const north = _.first(grid)!
+    const south = _.last(grid)!
+    const east = grid.map((c) => _.last(c)!).join("")
+    const west = grid.map((c) => _.first(c)!).join("")
+
+    const edge0 = [north, east, south, west]
+    const edge90 = rotate(edge0)
+    const edge180 = rotate(edge90)
+    const edge270 = rotate(edge180)
+
+    edges.push({ id, rot: 0, ...toDirObject(edge0) })
+    edges.push({ id, rot: 1, ...toDirObject(edge90) })
+    edges.push({ id, rot: 2, ...toDirObject(edge180) })
+    edges.push({ id, rot: 3, ...toDirObject(edge270) })
   }
 
-  return grids[3079]
+  const corners = new Set()
+
+  // Find corner pieces which only have 2 matching adjecants
+  // for (let i = 0; i < edges.length; i += 8) {
+  //   const { id, north, east, south, west } = edges[i]
+  //   if (corners.has(id)) continue
+  //   const rest = edges.filter((e) => e.id != id)
+  //
+  //   const matches = rest.filter((e) =>
+  //     e.north == south || e.east == west || e.south == north || e.west == east
+  //   )
+  //   console.log(id, south, matches.length)
+  // }
+
+  return edges.filter((e) => e.id == 2473)
 }
 
 const solve1Sample = runPart1 ? solve1(sample) : "skipped"
