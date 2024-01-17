@@ -19,54 +19,43 @@ console.log("🎄 Day 20: Jurassic Jigsaw")
 
 const runPart1 = true
 const runPart2 = false
-const runBoth = false
+const runBoth = true
 
 /// Part 1
 
 const solve1 = (data: Puzzle) => {
-  const len = Math.sqrt(data.length)
-  const reverse = (str: string) => str.split("").reverse().join("")
-  const rotate = (arr: string[]) => [arr[3], arr[0], arr[1], arr[2]]
-  const toDirObject = (arr: string[]) => ({
-    north: arr[0],
-    east: arr[1],
-    south: arr[2],
-    west: arr[3],
-  })
-
-  const edges = []
+  const tiles = []
   for (const [id, grid] of data) {
-    const north = _.first(grid)!
-    const south = _.last(grid)!
-    const east = grid.map((c) => _.last(c)!).join("")
-    const west = grid.map((c) => _.first(c)!).join("")
+    const edges = [
+      grid[0],
+      grid[9],
+      grid.map((c) => c[0]).join(""),
+      grid.map((c) => c[9]).join(""),
+    ]
 
-    const edge0 = [north, east, south, west]
-    const edge90 = rotate(edge0)
-    const edge180 = rotate(edge90)
-    const edge270 = rotate(edge180)
-
-    edges.push({ id, rot: 0, ...toDirObject(edge0) })
-    edges.push({ id, rot: 1, ...toDirObject(edge90) })
-    edges.push({ id, rot: 2, ...toDirObject(edge180) })
-    edges.push({ id, rot: 3, ...toDirObject(edge270) })
+    tiles.push({
+      id,
+      edges: new Set([
+        ...edges,
+        ...edges.map((e) => e.split("").reverse().join("")),
+      ]),
+    })
   }
 
-  const corners = new Set()
+  const corners = []
 
   // Find corner pieces which only have 2 matching adjecants
-  // for (let i = 0; i < edges.length; i += 8) {
-  //   const { id, north, east, south, west } = edges[i]
-  //   if (corners.has(id)) continue
-  //   const rest = edges.filter((e) => e.id != id)
-  //
-  //   const matches = rest.filter((e) =>
-  //     e.north == south || e.east == west || e.south == north || e.west == east
-  //   )
-  //   console.log(id, south, matches.length)
-  // }
+  for (const { id, edges: [n, e, s, w] } of tiles) {
+    const matches = tiles
+      .filter((t) =>
+        t.id != id &&
+        (t.edges.has(n) || t.edges.has(e) || t.edges.has(s) || t.edges.has(w))
+      )
 
-  return edges.filter((e) => e.id == 2473)
+    if (matches.length == 2) corners.push(id)
+  }
+
+  return corners.reduce((p, c) => p * c, 1)
 }
 
 const solve1Sample = runPart1 ? solve1(sample) : "skipped"
