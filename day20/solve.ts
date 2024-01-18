@@ -65,37 +65,48 @@ console.log("Task:\t", solve1Task)
 /// Part 2
 
 const solve2 = (data: Puzzle) => {
-  const tiles: Tile[] = []
-  for (const [id, grid] of data) {
-    const edges = [
-      grid[0],
-      grid[9],
-      grid.map((c) => c[0]).join(""),
-      grid.map((c) => c[9]).join(""),
-    ]
+  const tiles = []
 
-    tiles.push({
-      id,
-      edges: new Set([
-        ...edges,
-        ...edges.map((e) => e.split("").reverse().join("")),
-      ]),
-    })
+  const rotate = (arr: string[]) =>
+    _.zip(...arr.reverse().map((r) => r.split(""))).map((r) => r.join(""))
+
+  for (const [id, g] of data) {
+    let grid = g
+    for (let rot = 0; rot < 4; rot++) {
+      const top = grid[0]
+      const bottom = grid[9]
+      const left = grid.map((r) => r[0]).join("")
+      const right = grid.map((r) => r[9]).join("")
+      tiles.push({ id, rot, flip: 0, grid, left, right, top, bottom })
+      grid = rotate(grid)
+    }
+
+    let revGrid = g.map((r) => r.split("").reverse().join(""))
+    for (let rot = 0; rot < 4; rot++) {
+      const top = grid[0]
+      const bottom = grid[9]
+      const left = grid.map((r) => r[0]).join("")
+      const right = grid.map((r) => r[9]).join("")
+      tiles.push({ id, rot, flip: 1, grid: revGrid, left, right, top, bottom })
+      revGrid = rotate(revGrid)
+    }
   }
-
-  const topLeft = tiles.find(({ id, edges: [n, e, s, w] }) =>
-    2 == tiles
-      .filter((t) => t.id != id)
-      .filter(({ edges: x }) => x.has(n) || x.has(e) || x.has(s) || x.has(w))
-      .length
-  )
 
   const len = Math.sqrt(data.length)
   const grid = _.times(len, () => _.times(len, () => null))
-  grid[0][0] = topLeft
 
-  return [corners, grid]
-  
+  const rows = []
+  for (const tile of tiles) {
+    const row = [tile]
+
+    for (const nextTile of tiles) {
+      if (tile.id == nextTile.id) continue
+      const prev = _.last(row)!
+      if (prev.right == nextTile.left) row.push(nextTile)
+    }
+  }
+
+  return tiles.length
 }
 
 const solve2Sample = runPart2 ? solve2(sample) : "skipped"
