@@ -3,6 +3,7 @@ import _ from "npm:lodash"
 import { read } from "../utils/Reader.ts"
 
 type Puzzle = [number, string[]][]
+type Tile = { id: number; edges: Set<string> }
 
 const [task, sample] = read("day20")
   .map((file) => file.split("\n\n").slice(0, -1))
@@ -18,13 +19,13 @@ console.clear()
 console.log("🎄 Day 20: Jurassic Jigsaw")
 
 const runPart1 = true
-const runPart2 = false
+const runPart2 = true
 const runBoth = true
 
 /// Part 1
 
 const solve1 = (data: Puzzle) => {
-  const tiles = []
+  const tiles: Tile[] = []
   for (const [id, grid] of data) {
     const edges = [
       grid[0],
@@ -42,20 +43,16 @@ const solve1 = (data: Puzzle) => {
     })
   }
 
-  const corners = []
+  const corners = tiles
+    .filter(({ id, edges: [n, e, s, w] }) =>
+      2 == tiles
+        .filter((t) => t.id != id)
+        .filter(({ edges: x }) => x.has(n) || x.has(e) || x.has(s) || x.has(w))
+        .length
+    )
+    .map(({ id }) => id)
 
-  // Find corner pieces which only have 2 matching adjecants
-  for (const { id, edges: [n, e, s, w] } of tiles) {
-    const matches = tiles
-      .filter((t) =>
-        t.id != id &&
-        (t.edges.has(n) || t.edges.has(e) || t.edges.has(s) || t.edges.has(w))
-      )
-
-    if (matches.length == 2) corners.push(id)
-  }
-
-  return corners.reduce((p, c) => p * c, 1)
+  return [corners, corners.reduce((p, c) => p * c, 1)]
 }
 
 const solve1Sample = runPart1 ? solve1(sample) : "skipped"
@@ -68,6 +65,37 @@ console.log("Task:\t", solve1Task)
 /// Part 2
 
 const solve2 = (data: Puzzle) => {
+  const tiles: Tile[] = []
+  for (const [id, grid] of data) {
+    const edges = [
+      grid[0],
+      grid[9],
+      grid.map((c) => c[0]).join(""),
+      grid.map((c) => c[9]).join(""),
+    ]
+
+    tiles.push({
+      id,
+      edges: new Set([
+        ...edges,
+        ...edges.map((e) => e.split("").reverse().join("")),
+      ]),
+    })
+  }
+
+  const topLeft = tiles.find(({ id, edges: [n, e, s, w] }) =>
+    2 == tiles
+      .filter((t) => t.id != id)
+      .filter(({ edges: x }) => x.has(n) || x.has(e) || x.has(s) || x.has(w))
+      .length
+  )
+
+  const len = Math.sqrt(data.length)
+  const grid = _.times(len, () => _.times(len, () => null))
+  grid[0][0] = topLeft
+
+  return [corners, grid]
+  
 }
 
 const solve2Sample = runPart2 ? solve2(sample) : "skipped"
