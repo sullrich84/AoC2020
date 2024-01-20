@@ -45,12 +45,18 @@ function edges(tile: string[]) {
 }
 
 function flip(tile: string[]) {
-  return tile.map((r) => r.split("").reverse().join(""))
+  return tile.map((r) => r.split("").toReversed().join(""))
 }
 
 function rotate(tile: string[]) {
-  const splitted = tile.reverse().map((r) => r.split(""))
+  const splitted = tile.toReversed().map((r) => r.split(""))
   return _.zip(...splitted).map((r) => r.join(""))
+}
+
+function allCombinations(tile: string[]) {
+  return [tile, flip(tile)]
+    .map((t) => [t, rotate(t), rotate(rotate(t)), rotate(rotate(rotate(t)))])
+    .flat()
 }
 
 function lineUp(a: string[], b: string[]) {
@@ -68,8 +74,8 @@ function adjacents(tile: Tile, tiles: Tile[]) {
 
 const solve1 = (data: Puzzle) => {
   const tiles = data.map(([id, tile]) => {
-    const allEdges = [...edges(tile), ...flip(edges(tile))]
-    return { id, tile, edges: allEdges }
+    const all = allCombinations(tile).map((c) => edges(c)).flat()
+    return { id, tile, edges: all }
   })
 
   const corners = tiles.filter((t) => adjacents(t, tiles) == 2).map((t) => t.id)
@@ -86,55 +92,25 @@ console.log("Task:\t", solve1Task)
 /// Part 2
 
 const solve2 = (data: Puzzle, topLeftId: number) => {
-  const tiles = []
-
-  for (const [id, rawTile] of data) {
-    let tile = rawTile
-    for (let rot = 0; rot < 4; rot++) {
-      tiles.push({ id, tile })
-      tile = rotate(tile)
-    }
-
-    let revTile = rawTile.map((r) => r.split("").reverse().join(""))
-    for (let rot = 0; rot < 4; rot++) {
-      tiles.push({ id, tile: revTile })
-      revTile = rotate(revTile)
-    }
-  }
-
-  const corners = tiles
-    .filter((corner) =>
-      tiles
-        .filter(({ id }) => id != corner.id)
-        .filter(({ edges }) => lineUp(edges, corner.edges)).length == 2
-    )
-    .map(({ id }) => id)
-
   const len = Math.sqrt(data.length)
-  const start = tiles.filter(({ id }) => id == topLeftId)
-
   const photo = _.times(len, () => _.times(len, () => [""]))
-  const placed = new Set()
 
-  // console.log(start)
+  const tiles = data.map(([id, tile]) =>
+    allCombinations(tile)
+      .map((tile) => ({ id, tile, edges: edges(tile) }))
+      .flat()
+  ).flat()
+
+  // console.log(allCombinations(flip(x)).map((r) => r.join("\n")).join("\n\n"))
+  // console.log()
+  // console.log()
 
   for (let y = 0; y < len; y++) {
     for (let x = 0; x < len; x++) {
-      // Set corner tile as starting tile
-      if (y == 0 && x == 0) {
-        photo[y][x] = start.tile
-        placed.add(start.id)
-        continue
-      }
-
-      const prevRight = (_.get(photo, [y, x - 1]) || [])
-        .map((c) => c[9]).join("")
-
-      const notPlaced = tiles.filter(({ id }) => !placed.has(id))
     }
   }
 
-  return 0
+  return tiles
 }
 
 const solve2Sample = runPart2 ? solve2(sample, 1951) : "skipped"
