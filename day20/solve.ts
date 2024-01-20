@@ -19,10 +19,9 @@ console.log("🎄 Day 20: Jurassic Jigsaw")
 
 const runPart1 = true
 const runPart2 = true
-const runBoth = true
+const runBoth = false
 
-type Edges = [string, string, string, string]
-type Tile = { id: number; tile: string[]; edges: Edges }
+type Tile = { id: number; tile: string[]; edges: string[] }
 
 function top(tile: string[]) {
   return _.first(tile)!
@@ -39,6 +38,11 @@ function right(tile: string[]) {
 function left(tile: string[]) {
   return tile.map((c) => _.first(c)).join("")
 }
+
+const TOP = 0
+const RIGHT = 1
+const BOTTOM = 2
+const LEFT = 3
 
 function edges(tile: string[]) {
   return [top(tile), right(tile), bottom(tile), left(tile)]
@@ -70,14 +74,24 @@ function adjacents(tile: Tile, tiles: Tile[]) {
     .length
 }
 
-/// Part 1
-
-const solve1 = (data: Puzzle) => {
-  const tiles = data.map(([id, tile]) => {
+function tilesWithAllEdges(data: Puzzle) {
+  return data.map(([id, tile]) => {
     const all = allCombinations(tile).map((c) => edges(c)).flat()
     return { id, tile, edges: all }
   })
+}
 
+function allTilesWithEdges(data: Puzzle) {
+  return data.map(([id, tile]) => {
+    const allTiles = allCombinations(tile)
+    return allTiles.map((t) => ({ id, t, edges: edges(t) }))
+  }).flat()
+}
+
+/// Part 1
+
+const solve1 = (data: Puzzle) => {
+  const tiles = tilesWithAllEdges(data)
   const corners = tiles.filter((t) => adjacents(t, tiles) == 2).map((t) => t.id)
   return [corners, corners.reduce((p, c) => p * c, 1)]
 }
@@ -92,25 +106,70 @@ console.log("Task:\t", solve1Task)
 /// Part 2
 
 const solve2 = (data: Puzzle, topLeftId: number) => {
+  const twae = tilesWithAllEdges(data)
+  const cornerIds = twae.filter((t) => adjacents(t, twae) == 2).map((t) => t.id)
+  const outerIds = twae.filter((t) => adjacents(t, twae) == 3).map((t) => t.id)
+  const innerIds = twae.filter((t) => adjacents(t, twae) == 4).map((t) => t.id)
+
   const len = Math.sqrt(data.length)
   const photo = _.times(len, () => _.times(len, () => [""]))
-
-  const tiles = data.map(([id, tile]) =>
-    allCombinations(tile)
-      .map((tile) => ({ id, tile, edges: edges(tile) }))
-      .flat()
-  ).flat()
+  const tiles = allTilesWithEdges(data)
 
   // console.log(allCombinations(flip(x)).map((r) => r.join("\n")).join("\n\n"))
   // console.log()
   // console.log()
 
-  for (let y = 0; y < len; y++) {
-    for (let x = 0; x < len; x++) {
-    }
+  const xxx = tiles.filter((t) => t.id == 1951)
+
+  for (const x of xxx) {
+    const topAdj = tiles
+      .filter((t) => t.id != x.id)
+      .filter((t) => t.edges[BOTTOM] == x.edges[TOP])
+
+    console.log(x.id, topAdj.map((a) => a.id))
   }
 
-  return tiles
+  const image = [
+    ".####...#####..#...###..",
+    "#####..#..#.#.####..#.#.",
+    ".#.#...#.###...#.##.##..",
+    "#.#.##.###.#.##.##.#####",
+    "..##.###.####..#.####.##",
+    "...#.#..##.##...#..#..##",
+    "#.##.#..#.#..#..##.#.#..",
+    ".###.##.....#...###.#...",
+    "#.####.#.#....##.#..#.#.",
+    "##...#..#....#..#...####",
+    "..#.##...###..#.#####..#",
+    "....#.##.#.#####....#...",
+    "..##.##.###.....#.##..#.",
+    "#...#...###..####....##.",
+    ".#.##...#.##.#.#.###...#",
+    "#.###.#..####...##..#...",
+    "#.###...#.##...#.######.",
+    ".###.###.#######..#####.",
+    "..##.#..#..#.#######.###",
+    "#.#..##.########..#..##.",
+    "#.#####..#.#...##..#....",
+    "#....##..#.#########..##",
+    "#...#.....#..##...###.##",
+    "#..###....##.#...##.##.#",
+  ]
+
+  const monster = [
+    "                  # ",
+    "#    ##    ##    ###",
+    " #  #  #  #  #  #   ",
+  ]
+
+  const md = monster.map((r, y) =>
+    r.split("")
+      .map((c, x) => [c, x])
+      .filter(([c]) => c == "#")
+      .map(([c, x]) => [y,x])
+  ).flat()
+
+  return md
 }
 
 const solve2Sample = runPart2 ? solve2(sample, 1951) : "skipped"
