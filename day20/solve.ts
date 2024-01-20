@@ -157,19 +157,44 @@ const solve2 = (data: Puzzle, topLeftId: number) => {
   ]
 
   const monster = [
-    "                  # ",
-    "#    ##    ##    ###",
-    " #  #  #  #  #  #   ",
+    [0, 18],
+    [1, 0],
+    [1, 5],
+    [1, 6],
+    [1, 11],
+    [1, 12],
+    [1, 17],
+    [1, 18],
+    [1, 19],
+    [2, 1],
+    [2, 4],
+    [2, 7],
+    [2, 10],
+    [2, 13],
+    [2, 16],
   ]
 
-  const md = monster.map((r, y) =>
-    r.split("")
-      .map((c, x) => [c, x])
-      .filter(([c]) => c == "#")
-      .map(([c, x]) => [y,x])
-  ).flat()
+  let roughness = image
+    .map((r) => r.split(""))
+    .flat()
+    .filter((r) => r == "#")
+    .length
 
-  return md
+  for (let y = 0; y < image.length; y++) {
+    for (let x = 0; x < image[y].length; x++) {
+      let matches = 0
+      for (const [dy, dx] of monster) {
+        if ((image[y + dy] || "")[x + dx] == "#") {
+          matches += 1
+        }
+      }
+      if (matches == monster.length) {
+        roughness -= monster.length
+      }
+    }
+  }
+
+  return roughness
 }
 
 const solve2Sample = runPart2 ? solve2(sample, 1951) : "skipped"
