@@ -84,7 +84,7 @@ function tilesWithAllEdges(data: Puzzle) {
 function allTilesWithEdges(data: Puzzle) {
   return data.map(([id, tile]) => {
     const allTiles = allCombinations(tile)
-    return allTiles.map((t) => ({ id, t, edges: edges(t) }))
+    return allTiles.map((tile) => ({ id, tile, edges: edges(tile) }))
   }).flat()
 }
 
@@ -111,60 +111,105 @@ const solve2 = (data: Puzzle, topLeftId: number) => {
   const outerIds = twae.filter((t) => adjacents(t, twae) == 3).map((t) => t.id)
   const innerIds = twae.filter((t) => adjacents(t, twae) == 4).map((t) => t.id)
 
-  const len = Math.sqrt(data.length)
-  const photo = _.times(len, () => _.times(len, () => [""]))
   const tiles = allTilesWithEdges(data)
+  const corners = tiles.filter((t) => _.includes(cornerIds, t.id))
+  const outers = tiles.filter((t) => _.includes(outerIds, t.id))
+  const inners = tiles.filter((t) => _.includes(innerIds, t.id))
+
+  const len = Math.sqrt(data.length)
 
   // console.log(allCombinations(flip(x)).map((r) => r.join("\n")).join("\n\n"))
   // console.log()
   // console.log()
 
-  const taken = new Set()
-  for (let y = 0; y < len; y++) {
-    for (let x = 0; x < len; x++) {
-      if (y == 0 && x == 0) {
-        // Since we can rotate and flip all tiles
-        // we can just pick the first corner tile
-        // and make it out top left starting corner
-        const topLeftId = _.first(cornerIds)!
-        const topLeft = tiles.find((t) => t.id == topLeftId)
+  const blank = { id: 0, tile: [""], edges: [""] }
+  let photo = _.times(len, () => _.times(len, () => blank))
 
-        photo[y][x] = topLeft
-        taken.add(topLeft.id)
+  start: for (let cId = 0; cId < cornerIds.length; cId++) {
+    const taken = new Set()
+    photo = _.times(len, () => _.times(len, () => blank))
 
-        console.log(`${topLeft.id} will be our starting tile`)
-        continue
-      }
+    for (let y = 0; y < len; y++) {
+      for (let x = 0; x < len; x++) {
+        if (y == 0 && x == 0) {
+          console.log("===================================")
+          const topLeft = corners[cId]
 
-      let rest = tiles.filter((t) => !taken.has(t.id))
-      if ((y == 0 || y == len - 1) && (x == 0 || x == len - 1)) {
-        // Corner case -> next tile should be a corner tile
-        rest = cornerIds.filter((t) => !taken.has(t.id))
-      }
+          photo[y][x] = topLeft
+          taken.add(topLeft.id)
+          console.log(y, x, "will be", topLeft.id)
 
-      if (y == 0) {
-        // Tile should only match with left adjacent
-        const left = photo[y][x - 1]
-        const nextTile = rest.filter((t) => left.edges[RIGHT] == t.edges[LEFT])
+          continue
+        }
 
-        if (nextTile.length != 1) console.log("Invalid nexts", y, x)
-        photo[y][x] = _.first(nextTile)!
+        let rest = []
+        if ((y == 0 || y == len - 1) && (x == 0 || x == len - 1)) {
+          // Corner case -> next tile should be a corner tile
+          console.log(y, x, "Picking next from corners")
+          rest = corners.filter((t) => !taken.has(t.id))
+        } else if ((y == 0 || y == len - 1) || (x == 0 || x == len - 1)) {
+          // Edge case - next tile should be outer tile
+          console.log(y, x, "Picking next from outers")
+          rest = outers.filter((t) => !taken.has(t.id))
+        } else {
+          console.log(y, x, "Picking next from inners")
+          rest = inners.filter((t) => !taken.has(t.id))
+        }
+
+        const top = (photo[y - 1] || [])[x]
+        const left = (photo[y] || [])[x - 1]
+
+        if (y == 0) {
+          // Tile should only match with left adjacent
+          const nextTiles = rest
+            .filter((t) => left.edges[RIGHT] == t.edges[LEFT])
+
+          if (nextTiles.length == 0) continue start
+          if (nextTiles.length > 1) throw "Too much next tiles"
+
+          const nextTile = _.first(nextTiles)!
+          photo[y][x] = nextTile
+          taken.add(nextTile.id)
+          console.log(y, x, "will be", nextTile.id)
+
+          continue
+        }
+
+        if (x == 0) {
+          // Tile should only match with top adjacent
+          const nextTiles = rest
+            .filter((t) => top.edges[BOTTOM] == t.edges[TOP])
+
+          if (nextTiles.length == 0) continue start
+          if (nextTiles.length > 1) throw "Too much next tiles"
+
+          const nextTile = _.first(nextTiles)!
+          photo[y][x] = nextTile
+          taken.add(nextTile.id)
+          console.log(y, x, "will be", nextTile.id)
+
+          continue
+        }
+
+        const nextTiles = rest
+          .filter((t) => top.edges[BOTTOM] == t.edges[TOP])
+          .filter((t) => left.edges[RIGHT] == t.edges[LEFT])
+
+        if (nextTiles.length == 0) continue start
+        if (nextTiles.length > 1) throw "Too much next tiles"
+
+        const nextTile = _.first(nextTiles)!
+        photo[y][x] = nextTile
         taken.add(nextTile.id)
-        continue
-      }
-
-      if (x == 0) {
-        // Tile should only match with top adjacent
-        const top = photo[y - 1][x]
-        const nextTile = rest.filter((t) => top.edges[BOTTOM] == t.edges[TOP])
-
-        if (nextTile.length != 1) console.log("Invalid nexts", y, x)
-        photo[y][x] = _.first(nextTile)!
-        taken.add(nextTile.id)
-        continue
+        console.log(y, x, "will be", nextTile.id)
       }
     }
+
+    break
   }
+
+  console.log("photo completed?")
+  console.log(photo)
 
   console.log("-------------------------")
 
