@@ -1,5 +1,5 @@
 // @deno-types="npm:@types/lodash"
-import _, { times } from "npm:lodash"
+import _, { groupBy, times } from "npm:lodash"
 import { read } from "../utils/Reader.ts"
 
 type Puzzle = [number, string[]][]
@@ -119,15 +119,54 @@ const solve2 = (data: Puzzle, topLeftId: number) => {
   // console.log()
   // console.log()
 
-  const xxx = tiles.filter((t) => t.id == 1951)
+  const taken = new Set()
+  for (let y = 0; y < len; y++) {
+    for (let x = 0; x < len; x++) {
+      if (y == 0 && x == 0) {
+        // Since we can rotate and flip all tiles
+        // we can just pick the first corner tile
+        // and make it out top left starting corner
+        const topLeftId = _.first(cornerIds)!
+        const topLeft = tiles.find((t) => t.id == topLeftId)
 
-  for (const x of xxx) {
-    const topAdj = tiles
-      .filter((t) => t.id != x.id)
-      .filter((t) => t.edges[BOTTOM] == x.edges[TOP])
+        photo[y][x] = topLeft
+        taken.add(topLeft.id)
 
-    console.log(x.id, topAdj.map((a) => a.id))
+        console.log(`${topLeft.id} will be our starting tile`)
+        continue
+      }
+
+      let rest = tiles.filter((t) => !taken.has(t.id))
+      if ((y == 0 || y == len - 1) && (x == 0 || x == len - 1)) {
+        // Corner case -> next tile should be a corner tile
+        rest = cornerIds.filter((t) => !taken.has(t.id))
+      }
+
+      if (y == 0) {
+        // Tile should only match with left adjacent
+        const left = photo[y][x - 1]
+        const nextTile = rest.filter((t) => left.edges[RIGHT] == t.edges[LEFT])
+
+        if (nextTile.length != 1) console.log("Invalid nexts", y, x)
+        photo[y][x] = _.first(nextTile)!
+        taken.add(nextTile.id)
+        continue
+      }
+
+      if (x == 0) {
+        // Tile should only match with top adjacent
+        const top = photo[y - 1][x]
+        const nextTile = rest.filter((t) => top.edges[BOTTOM] == t.edges[TOP])
+
+        if (nextTile.length != 1) console.log("Invalid nexts", y, x)
+        photo[y][x] = _.first(nextTile)!
+        taken.add(nextTile.id)
+        continue
+      }
+    }
   }
+
+  console.log("-------------------------")
 
   const image = [
     ".####...#####..#...###..",
