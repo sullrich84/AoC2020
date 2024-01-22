@@ -1,5 +1,5 @@
 // @deno-types="npm:@types/lodash"
-import _, { groupBy, times } from "npm:lodash"
+import _ from "npm:lodash"
 import { read } from "../utils/Reader.ts"
 
 type Puzzle = [number, string[]][]
@@ -93,7 +93,7 @@ function allTilesWithEdges(data: Puzzle) {
 const solve1 = (data: Puzzle) => {
   const tiles = tilesWithAllEdges(data)
   const corners = tiles.filter((t) => adjacents(t, tiles) == 2).map((t) => t.id)
-  return [corners, corners.reduce((p, c) => p * c, 1)]
+  return corners.reduce((p, c) => p * c, 1)
 }
 
 const solve1Sample = runPart1 ? solve1(sample) : "skipped"
@@ -108,14 +108,9 @@ console.log("Task:\t", solve1Task)
 const solve2 = (data: Puzzle, topLeftId: number) => {
   const twae = tilesWithAllEdges(data)
   const cornerIds = twae.filter((t) => adjacents(t, twae) == 2).map((t) => t.id)
-  const outerIds = twae.filter((t) => adjacents(t, twae) == 3).map((t) => t.id)
-  const innerIds = twae.filter((t) => adjacents(t, twae) == 4).map((t) => t.id)
 
   const tiles = allTilesWithEdges(data)
   const corners = tiles.filter((t) => _.includes(cornerIds, t.id))
-  const outers = tiles.filter((t) => _.includes(outerIds, t.id))
-  const inners = tiles.filter((t) => _.includes(innerIds, t.id))
-
   const len = Math.sqrt(data.length)
 
   const blank = { id: 0, tile: [""], edges: [""] }
@@ -129,22 +124,18 @@ const solve2 = (data: Puzzle, topLeftId: number) => {
       for (let x = 0; x < len; x++) {
         if (y == 0 && x == 0) {
           const topLeft = corners[cId]
-
           photo[y][x] = topLeft
           taken.add(topLeft.id)
-
           continue
         }
 
         let rest = []
         if ((y == 0 || y == len - 1) && (x == 0 || x == len - 1)) {
-          // Corner case -> next tile should be a corner tile
-          rest = corners.filter((t) => !taken.has(t.id))
+          rest = tiles.filter((t) => !taken.has(t.id))
         } else if ((y == 0 || y == len - 1) || (x == 0 || x == len - 1)) {
-          // Edge case - next tile should be outer tile
-          rest = outers.filter((t) => !taken.has(t.id))
+          rest = tiles.filter((t) => !taken.has(t.id))
         } else {
-          rest = inners.filter((t) => !taken.has(t.id))
+          rest = tiles.filter((t) => !taken.has(t.id))
         }
 
         const top = (photo[y - 1] || [])[x]
@@ -152,15 +143,10 @@ const solve2 = (data: Puzzle, topLeftId: number) => {
         let nextTiles = []
 
         if (y == 0) {
-          // Tile should only match with left adjacent
-          nextTiles = rest
-            .filter((t) => left.edges[RIGHT] == t.edges[LEFT])
+          nextTiles = rest.filter((t) => left.edges[RIGHT] == t.edges[LEFT])
         } else if (x == 0) {
-          // Tile should only match with top adjacent
-          nextTiles = rest
-            .filter((t) => top.edges[BOTTOM] == t.edges[TOP])
+          nextTiles = rest.filter((t) => top.edges[BOTTOM] == t.edges[TOP])
         } else {
-          // Tile should match top and left adjacents
           nextTiles = rest
             .filter((t) => top.edges[BOTTOM] == t.edges[TOP])
             .filter((t) => left.edges[RIGHT] == t.edges[LEFT])
@@ -175,21 +161,6 @@ const solve2 = (data: Puzzle, topLeftId: number) => {
     }
     break
   }
-
-  let image = []
-
-  for (let y = 0; y < len; y++) {
-    for (let l = 1; l < 9; l++) {
-      let line = ""
-      for (let x = 0; x < len; x++) {
-        line += photo[y][x].tile[l].substring(1, 9)
-      }
-      image.push(line)
-    }
-  }
-
-  _.times(0, () => image = rotate(image))
-  console.log(image.join("\n"))
 
   const monster = [
     [0, 18],
@@ -209,28 +180,42 @@ const solve2 = (data: Puzzle, topLeftId: number) => {
     [2, 16],
   ]
 
-  let monsters = 0
+  const countMonsters = (image: string[]) => {
+    let monsters = 0
+    for (let y = 0; y < image.length; y++) {
+      for (let x = 0; x < image[y].length; x++) {
+        let matches = 0
+        for (const [dy, dx] of monster) {
+          if ((image[y + dy] || "")[x + dx] == "#") matches += 1
+        }
+        if (matches == monster.length) monsters += 1
+      }
+    }
+
+    return monsters
+  }
+
+  const image = []
+  for (let y = 0; y < len; y++) {
+    for (let l = 1; l < 9; l++) {
+      let line = ""
+      for (let x = 0; x < len; x++) {
+        line += photo[y][x].tile[l].substring(1, 9)
+      }
+      image.push(line)
+    }
+  }
+
   const roughness = image
     .map((r) => r.split(""))
     .flat()
     .filter((r) => r == "#")
     .length
 
-  for (let y = 0; y < image.length; y++) {
-    for (let x = 0; x < image[y].length; x++) {
-      let matches = 0
-      for (const [dy, dx] of monster) {
-        if ((image[y + dy] || "")[x + dx] == "#") {
-          matches += 1
-        }
-      }
-      if (matches == monster.length) {
-        monsters += 1
-      }
-    }
-  }
-
-  return [roughness, monsters, roughness - monsters * monster.length]
+  return allCombinations(image)
+    .map(countMonsters)
+    .filter((v) => v > 0)
+    .reduce((p, c) => p - c * monster.length, roughness)
 }
 
 const solve2Sample = runPart2 ? solve2(sample, 1951) : "skipped"
