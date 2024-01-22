@@ -19,7 +19,7 @@ console.log("🎄 Day 20: Jurassic Jigsaw")
 
 const runPart1 = true
 const runPart2 = true
-const runBoth = false
+const runBoth = true
 
 type Tile = { id: number; tile: string[]; edges: string[] }
 
@@ -118,10 +118,6 @@ const solve2 = (data: Puzzle, topLeftId: number) => {
 
   const len = Math.sqrt(data.length)
 
-  // console.log(allCombinations(flip(x)).map((r) => r.join("\n")).join("\n\n"))
-  // console.log()
-  // console.log()
-
   const blank = { id: 0, tile: [""], edges: [""] }
   let photo = _.times(len, () => _.times(len, () => blank))
 
@@ -132,12 +128,10 @@ const solve2 = (data: Puzzle, topLeftId: number) => {
     for (let y = 0; y < len; y++) {
       for (let x = 0; x < len; x++) {
         if (y == 0 && x == 0) {
-          console.log("===================================")
           const topLeft = corners[cId]
 
           photo[y][x] = topLeft
           taken.add(topLeft.id)
-          console.log(y, x, "will be", topLeft.id)
 
           continue
         }
@@ -145,100 +139,57 @@ const solve2 = (data: Puzzle, topLeftId: number) => {
         let rest = []
         if ((y == 0 || y == len - 1) && (x == 0 || x == len - 1)) {
           // Corner case -> next tile should be a corner tile
-          console.log(y, x, "Picking next from corners")
           rest = corners.filter((t) => !taken.has(t.id))
         } else if ((y == 0 || y == len - 1) || (x == 0 || x == len - 1)) {
           // Edge case - next tile should be outer tile
-          console.log(y, x, "Picking next from outers")
           rest = outers.filter((t) => !taken.has(t.id))
         } else {
-          console.log(y, x, "Picking next from inners")
           rest = inners.filter((t) => !taken.has(t.id))
         }
 
         const top = (photo[y - 1] || [])[x]
         const left = (photo[y] || [])[x - 1]
+        let nextTiles = []
 
         if (y == 0) {
           // Tile should only match with left adjacent
-          const nextTiles = rest
+          nextTiles = rest
             .filter((t) => left.edges[RIGHT] == t.edges[LEFT])
-
-          if (nextTiles.length == 0) continue start
-          if (nextTiles.length > 1) throw "Too much next tiles"
-
-          const nextTile = _.first(nextTiles)!
-          photo[y][x] = nextTile
-          taken.add(nextTile.id)
-          console.log(y, x, "will be", nextTile.id)
-
-          continue
-        }
-
-        if (x == 0) {
+        } else if (x == 0) {
           // Tile should only match with top adjacent
-          const nextTiles = rest
+          nextTiles = rest
             .filter((t) => top.edges[BOTTOM] == t.edges[TOP])
-
-          if (nextTiles.length == 0) continue start
-          if (nextTiles.length > 1) throw "Too much next tiles"
-
-          const nextTile = _.first(nextTiles)!
-          photo[y][x] = nextTile
-          taken.add(nextTile.id)
-          console.log(y, x, "will be", nextTile.id)
-
-          continue
+        } else {
+          // Tile should match top and left adjacents
+          nextTiles = rest
+            .filter((t) => top.edges[BOTTOM] == t.edges[TOP])
+            .filter((t) => left.edges[RIGHT] == t.edges[LEFT])
         }
-
-        const nextTiles = rest
-          .filter((t) => top.edges[BOTTOM] == t.edges[TOP])
-          .filter((t) => left.edges[RIGHT] == t.edges[LEFT])
 
         if (nextTiles.length == 0) continue start
-        if (nextTiles.length > 1) throw "Too much next tiles"
 
         const nextTile = _.first(nextTiles)!
         photo[y][x] = nextTile
         taken.add(nextTile.id)
-        console.log(y, x, "will be", nextTile.id)
       }
     }
-
     break
   }
 
-  console.log("photo completed?")
-  console.log(photo)
+  let image = []
 
-  console.log("-------------------------")
+  for (let y = 0; y < len; y++) {
+    for (let l = 1; l < 9; l++) {
+      let line = ""
+      for (let x = 0; x < len; x++) {
+        line += photo[y][x].tile[l].substring(1, 9)
+      }
+      image.push(line)
+    }
+  }
 
-  const image = [
-    ".####...#####..#...###..",
-    "#####..#..#.#.####..#.#.",
-    ".#.#...#.###...#.##.##..",
-    "#.#.##.###.#.##.##.#####",
-    "..##.###.####..#.####.##",
-    "...#.#..##.##...#..#..##",
-    "#.##.#..#.#..#..##.#.#..",
-    ".###.##.....#...###.#...",
-    "#.####.#.#....##.#..#.#.",
-    "##...#..#....#..#...####",
-    "..#.##...###..#.#####..#",
-    "....#.##.#.#####....#...",
-    "..##.##.###.....#.##..#.",
-    "#...#...###..####....##.",
-    ".#.##...#.##.#.#.###...#",
-    "#.###.#..####...##..#...",
-    "#.###...#.##...#.######.",
-    ".###.###.#######..#####.",
-    "..##.#..#..#.#######.###",
-    "#.#..##.########..#..##.",
-    "#.#####..#.#...##..#....",
-    "#....##..#.#########..##",
-    "#...#.....#..##...###.##",
-    "#..###....##.#...##.##.#",
-  ]
+  _.times(0, () => image = rotate(image))
+  console.log(image.join("\n"))
 
   const monster = [
     [0, 18],
@@ -258,7 +209,8 @@ const solve2 = (data: Puzzle, topLeftId: number) => {
     [2, 16],
   ]
 
-  let roughness = image
+  let monsters = 0
+  const roughness = image
     .map((r) => r.split(""))
     .flat()
     .filter((r) => r == "#")
@@ -273,12 +225,12 @@ const solve2 = (data: Puzzle, topLeftId: number) => {
         }
       }
       if (matches == monster.length) {
-        roughness -= monster.length
+        monsters += 1
       }
     }
   }
 
-  return roughness
+  return [roughness, monsters, roughness - monsters * monster.length]
 }
 
 const solve2Sample = runPart2 ? solve2(sample, 1951) : "skipped"
