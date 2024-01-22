@@ -3,7 +3,7 @@ import _, { reduce } from "npm:lodash"
 import { read } from "../utils/Reader.ts"
 import { wait } from "../utils/utils.ts"
 
-type Puzzle = [number[], number[]][]
+type Puzzle = [number[], number[]]
 
 const [task, sample] = read("day22")
   .map((file) => {
@@ -17,30 +17,19 @@ const [task, sample] = read("day22")
 console.clear()
 console.log("🎄 Day 22: Crab Combat")
 
-const runPart1 = false
+const runPart1 = true
 const runPart2 = true
 const runBoth = true
 
 /// Part 1
 
-const solve1 = ([p1, p2]: Puzzle) => {
-  const stack = [p1, p2]
+const solve1 = (data: Puzzle) => {
+  const [p1, p2] = _.cloneDeep(data)
 
-  let round = 0
   while (p1.length > 0 && p2.length > 0) {
-    console.log(`-- Round ${++round} --`)
-    console.log("Player 1's deck:", p1.join())
-    console.log("Player 2's deck:", p2.join())
-
     const [pp1, pp2] = [p1.shift()!, p2.shift()!]
-    if (pp1 == pp2) throw "Draw!"
-
-    console.log("Player 1 plays:", pp1)
-    console.log("Player 2 plays:", pp2)
-
     const winner = pp1 > pp2 ? 0 : 1
 
-    console.log(`Player ${winner + 1} wins the round!`)
     if (winner == 0) p1.push(pp1, pp2)
     else p2.push(pp2, pp1)
   }
@@ -62,44 +51,28 @@ console.log("Task:\t", solve1Task)
 
 /// Part 2
 
-const solve2 = ([p1, p2]: Puzzle) => {
-  function play(p1: number[], p2: number[], game = 1): [number[], string] {
-    console.log(`=== Game ${game} ===`)
-    console.log()
-
-    let round = 0
-    const plays1 = new Set()
-    const plays2 = new Set()
+const solve2 = (data: Puzzle) => {
+  const [p1, p2] = _.cloneDeep(data)
+  
+  function play(p1: number[], p2: number[], game = 0): [number[], string] {
+    const seen = new Set()
 
     while (p1.length > 0 && p2.length > 0) {
-      console.log()
-      console.log(`-- Round ${++round} (Game ${game}) --`)
-      console.log("Player 1's deck:", p1.join())
-      console.log("Player 2's deck:", p2.join())
-
       const [k1, k2] = [p1.join(), p2.join()]
-      if (plays1.has(k1) || plays2.has(k2)) {
-        return [p1, "p1"]
-      }
-
-      plays1.add(k1)
-      plays2.add(k2)
+      if (seen.has(k1) || seen.has(k2)) return [p1, "p1"]
+      seen.add(k1)
+      seen.add(k2)
 
       const [pp1, pp2] = [p1.shift()!, p2.shift()!]
-      if (pp1 == pp2) throw "Draw!"
-
-      console.log("Player 1 plays:", pp1)
-      console.log("Player 2 plays:", pp2)
-
       let winner = pp1 > pp2 ? 0 : 1
-      if (pp1 < p1.length + 1 && pp2 < p2.length + 1) {
-        console.log("Playing a sub-game to determine the winner...")
-        const subWinner = play([...p1], [...p2], game + 1, [p1.join(), p2.join()])
-        console.log(`...anyway, back to game ${game}.`);
-        winner = subWinner == "p1" ? 0 : 1
+
+      if (p1.length > 0 && p2.length > 0) {
+        if (pp1 <= p1.length && pp2 <= p2.length) {
+          const subWinner = play(p1.slice(0, pp1), p2.slice(0, pp2), game + 1)
+          winner = subWinner[1] == "p1" ? 0 : 1
+        }
       }
 
-      console.log(`Player ${winner + 1} wins round ${round} of game ${game}!`)
       if (winner == 0) p1.push(pp1, pp2)
       else p2.push(pp2, pp1)
     }
