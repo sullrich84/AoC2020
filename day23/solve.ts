@@ -37,7 +37,7 @@ const solve1 = (data: Puzzle) => {
     console.log("pick up:", pickup.join(", "))
 
     nums = _.without(nums, ...pickup)
-    let destination = cur - 1
+    let [destination, destIdx, target] = [null, -1, cur - 1]
     const [min, max] = [_.min(nums), _.max(nums)]
 
     while (destination == null) {
@@ -47,8 +47,11 @@ const solve1 = (data: Puzzle) => {
       target -= 1
     }
 
+    console.log("destination:", destination)
 
-   wait()
+    nums = [...nums.slice(0, destIdx + 1), ...pickup, ...nums.slice(destIdx + 1)]
+    console.log("next nums:", nums.join("  "))
+    wait()
   }
   const cur = 0
   const val = data[cur]
