@@ -14,52 +14,44 @@ console.log("🎄 Day 23: Crab Cups")
 
 const runPart1 = true
 const runPart2 = false
-const runBoth = false
+const runBoth = true
 
 /// Part 1
 
-function cycle(nums: number[], index: number) {
-  return nums[index % nums.length]
-}
+const solve = (data: Puzzle, moves: number) => {
+  let cups = _.clone(data)
 
-const solve1 = (data: Puzzle) => {
-  let idx = -1
-  let nums = _.cloneDeep(data)
+  const min = _.min(cups)!
+  const max = _.max(cups)!
 
-  for (let m = 0; m < 100; m++) {
-    console.log(`-- move ${m + 1} --`)
-    
-    idx = (idx + 1) % data.length
-    const cur = nums[idx]
-    const pickup = [...nums, ...nums].slice(idx + 1, idx + 4)
+  for (let move = 1; move <= moves; move++) {
+    const cur = cups.shift()!
+    const a = cups.shift()!
+    const b = cups.shift()!
+    const c = cups.shift()!
+    const pickUp = [a, b, c]
 
-    console.log("cups:", nums.map((v, i) => i == idx ? `(${v})` : v).join("  "))
-    console.log("pick up:", pickup.join(", "))
-
-    nums = _.without(nums, ...pickup)
-    let [destination, destIdx, target] = [null, -1, cur - 1]
-    const [min, max] = [_.min(nums), _.max(nums)]
-
-    while (destination == null) {
-      if (target < min) destination = max
-      destIdx = nums.indexOf(target)
-      if (destIdx != -1) destination = nums[destIdx]
-      target -= 1
+    let destination = cur - 1
+    while (pickUp.includes(destination) || destination < min) {
+      destination = destination > min ? destination - 1 : max
     }
 
-    console.log("destination:", destination)
-
-    nums = [...nums.slice(0, destIdx + 1), ...pickup, ...nums.slice(destIdx + 1)]
-    console.log("next nums:", nums.join("  "))
-    wait()
+    const destIndex = cups.indexOf(destination)
+    cups = [
+      ...cups.slice(0, destIndex + 1),
+      ...pickUp,
+      ...cups.slice(destIndex+1),
+      cur
+    ]    
   }
-  const cur = 0
-  const val = data[cur]
-  console.log({ cur, val })
+
+  const oneIdx = cups.indexOf(1)
+  const dest = [...cups.slice(oneIdx + 1), ...cups.slice(0, oneIdx)] 
+  return parseInt(dest.join(""))
 }
 
-const solve1Sample = runPart1 ? solve1(sample) : "skipped"
-const solve1Task = runPart1 && runBoth ? solve1(task) : "skipped"
+const solve1Sample = runPart1 ? solve(sample, 10) : "skipped"
+const solve1Task = runPart1 && runBoth ? solve(task, 100) : "skipped"
 
 console.log("\nPart 1:")
 console.log("Sample:\t", solve1Sample)
@@ -70,8 +62,8 @@ console.log("Task:\t", solve1Task)
 const solve2 = (data: Puzzle) => {
 }
 
-const solve2Sample = runPart2 ? solve2(sample) : "skipped"
-const solve2Task = runPart2 && runBoth ? solve2(task) : "skipped"
+const solve2Sample = runPart2 ? solve(sample) : "skipped"
+const solve2Task = runPart2 && runBoth ? solve(task, 10_000_000) : "skipped"
 
 console.log("\nPart 2:")
 console.log("Sample:\t", solve2Sample)
