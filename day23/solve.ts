@@ -3,7 +3,7 @@ import _ from "npm:lodash"
 import { read } from "../utils/Reader.ts"
 import { wait } from "../utils/utils.ts"
 
-type Puzzle = string[][]
+type Puzzle = number[]
 
 const [task, sample] = read("day23")
   .map((file) => file.split("").slice(0, -1))
@@ -40,13 +40,13 @@ const solve = (data: Puzzle, moves: number) => {
     cups = [
       ...cups.slice(0, destIndex + 1),
       ...pickUp,
-      ...cups.slice(destIndex+1),
-      cur
-    ]    
+      ...cups.slice(destIndex + 1),
+      cur,
+    ]
   }
 
   const oneIdx = cups.indexOf(1)
-  const dest = [...cups.slice(oneIdx + 1), ...cups.slice(0, oneIdx)] 
+  const dest = [...cups.slice(oneIdx + 1), ...cups.slice(0, oneIdx)]
   return parseInt(dest.join(""))
 }
 
@@ -59,11 +59,42 @@ console.log("Task:\t", solve1Task)
 
 /// Part 2
 
-const solve2 = (data: Puzzle) => {
+const solve2 = (data: Puzzle, moves: number) => {
+  let cups = [...data, ..._.range(_.max(data), 1_000_001)]
+  const start = performance.now()
+
+  const min = _.min(cups)!
+  const max = _.max(cups)!
+
+  for (let move = 1; move <= moves; move++) {
+    if(move % 1000 == 0) console.log(move / moves * 100, "% (", performance.now() - start, "ms )")
+    const cur = cups.shift()!
+    const a = cups.shift()!
+    const b = cups.shift()!
+    const c = cups.shift()!
+    const pickUp = [a, b, c]
+
+    let destination = cur - 1
+    while (pickUp.includes(destination) || destination < min) {
+      destination = destination > min ? destination - 1 : max
+    }
+
+    const destIndex = cups.indexOf(destination)
+    cups = [
+      ...cups.slice(0, destIndex + 1),
+      ...pickUp,
+      ...cups.slice(destIndex + 1),
+      cur,
+    ]
+  }
+
+  const oneIdx = cups.indexOf(1)
+  const dest = [...cups.slice(oneIdx + 1), ...cups.slice(0, oneIdx)]
+  return parseInt(dest.join(""))
 }
 
-const solve2Sample = runPart2 ? solve(sample) : "skipped"
-const solve2Task = runPart2 && runBoth ? solve(task, 10_000_000) : "skipped"
+const solve2Sample = runPart2 ? solve2(sample, 10_000_000) : "skipped"
+const solve2Task = runPart2 && runBoth ? solve2(task, 10_000_000) : "skipped"
 
 console.log("\nPart 2:")
 console.log("Sample:\t", solve2Sample)
