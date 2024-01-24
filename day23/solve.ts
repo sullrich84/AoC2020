@@ -1,7 +1,6 @@
 // @deno-types="npm:@types/lodash"
 import _ from "npm:lodash"
 import { read } from "../utils/Reader.ts"
-import { wait } from "../utils/utils.ts"
 
 type Puzzle = number[]
 
@@ -13,7 +12,7 @@ console.clear()
 console.log("🎄 Day 23: Crab Cups")
 
 const runPart1 = true
-const runPart2 = false
+const runPart2 = true
 const runBoth = true
 
 /// Part 1
@@ -60,37 +59,32 @@ console.log("Task:\t", solve1Task)
 /// Part 2
 
 const solve2 = (data: Puzzle, moves: number) => {
-  let cups = [...data, ..._.range(_.max(data), 1_000_001)]
-  const start = performance.now()
+  const cups = _.clone(data)
+  const next = _.range(1, 1_000_000 + 2)
 
-  const min = _.min(cups)!
-  const max = _.max(cups)!
-
-  for (let move = 1; move <= moves; move++) {
-    if(move % 1000 == 0) console.log(move / moves * 100, "% (", performance.now() - start, "ms )")
-    const cur = cups.shift()!
-    const a = cups.shift()!
-    const b = cups.shift()!
-    const c = cups.shift()!
-    const pickUp = [a, b, c]
-
-    let destination = cur - 1
-    while (pickUp.includes(destination) || destination < min) {
-      destination = destination > min ? destination - 1 : max
-    }
-
-    const destIndex = cups.indexOf(destination)
-    cups = [
-      ...cups.slice(0, destIndex + 1),
-      ...pickUp,
-      ...cups.slice(destIndex + 1),
-      cur,
-    ]
+  next[0] = next[next.length - 1] = cups[0]
+  for (let i = 0; i < cups.length - 1; i++) {
+    next[cups[i]] = cups[i + 1]
   }
 
-  const oneIdx = cups.indexOf(1)
-  const dest = [...cups.slice(oneIdx + 1), ...cups.slice(0, oneIdx)]
-  return parseInt(dest.join(""))
+  next[cups[cups.length - 1]] = _.max(cups)! + 1
+  let cur = 0
+
+  for (let c = 0; c <= moves; c++) {
+    cur = next[cur]
+    let ins = cur !== 1 ? cur - 1 : 1_000_000
+    const p1 = next[cur]
+    const p2 = next[p1]
+    const p3 = next[p2]
+
+    while (ins === p1 || ins === p2 || ins === p3) ins -= 1
+    if (ins < 1) ins += 1_000_000
+
+    // Update all without helper variables
+    ;[next[p3], next[ins], next[cur]] = [next[ins], next[cur], next[p3]]
+  }
+
+  return next[1] * next[next[1]]
 }
 
 const solve2Sample = runPart2 ? solve2(sample, 10_000_000) : "skipped"
