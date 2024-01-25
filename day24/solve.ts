@@ -1,7 +1,6 @@
 // @deno-types="npm:@types/lodash"
-import _, { lowerCase } from "npm:lodash"
+import _ from "npm:lodash"
 import { read } from "../utils/Reader.ts"
-import { wait } from "../utils/utils.ts"
 
 type Puzzle = ("nw" | "ne" | "w" | "e" | "sw" | "se")[][]
 
@@ -38,7 +37,7 @@ const delta = {
 }
 
 function buildHexGrid(data: Puzzle): Set<string> {
-  const hexGrid = new Set()
+  const hexGrid: Set<string> = new Set()
 
   for (const moves of data) {
     let [y, x] = [0, 0]
@@ -78,7 +77,7 @@ function getMinMax(hexGrid: Set<string>): number[] {
   const ys = coords.map(([y, _x]) => y)
   const xs = coords.map(([_y, x]) => x)
 
-  return [_.min(ys), _.max(ys), _.min(xs), _.max(xs)]
+  return [_.min(ys)!, _.max(ys)!, _.min(xs)!, _.max(xs)!]
 }
 
 const solve2 = (data: Puzzle) => {
@@ -87,8 +86,8 @@ const solve2 = (data: Puzzle) => {
   let currentHexGrid = _.clone(hexGrid)
 
   for (let d = 0; d < 100; d++) {
-    let nextHexGrid = _.clone(currentHexGrid)
-    let [minY, maxY, minX, maxX] = getMinMax(nextHexGrid)
+    const nextHexGrid = _.clone(currentHexGrid)
+    const [minY, maxY, minX, maxX] = getMinMax(nextHexGrid)
 
     for (let y = minY - 1; y <= maxY + 1; y++) {
       for (let x = minX - 1; x <= maxX + 1; x++) {
