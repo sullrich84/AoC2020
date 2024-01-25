@@ -72,12 +72,12 @@ const solve2 = (data: Puzzle, moves: number) => {
 
   for (let c = 0; c <= moves; c++) {
     cur = next[cur]
-    let ins = cur !== 1 ? cur - 1 : 1_000_000
+    let ins = cur != 1 ? cur - 1 : 1_000_000
     const p1 = next[cur]
     const p2 = next[p1]
     const p3 = next[p2]
 
-    while (ins === p1 || ins === p2 || ins === p3) ins -= 1
+    while (ins == p1 || ins == p2 || ins == p3) ins -= 1
     if (ins < 1) ins += 1_000_000
 
     // Update all without helper variables
