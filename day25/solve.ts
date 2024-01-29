@@ -26,14 +26,10 @@ const solve = ([cardPk, doorPk]: Puzzle) => {
   }
 
   let cardLs = 0
-  while (transform(7, cardLs) != cardPk) {
-    cardLs += 1
-  }
+  while (transform(7, cardLs) != cardPk) cardLs += 1
 
   let doorLs = 0
-  while (transform(7, doorLs) != doorPk) {
-    doorLs += 1
-  }
+  while (transform(7, doorLs) != doorPk) doorLs += 1
 
   return transform(doorPk, cardLs)
 }
@@ -44,4 +40,3 @@ const solveTask = runPart1 && runBoth ? solve(task) : "skipped"
 console.log("\nPart 1:")
 console.log("Sample:\t", solveSample)
 console.log("Task:\t", solveTask)
-
